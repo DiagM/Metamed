@@ -5,6 +5,7 @@ namespace App\Http\Controllers\laravel_example;
 use App\Http\Controllers\Controller;
 use App\Models\MedicalFile;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class MedicalFileManagement extends Controller
 {
@@ -111,31 +112,65 @@ class MedicalFileManagement extends Controller
       'description' => 'required|string',
       'medical_file' => 'required|file', // Validate the file upload
     ]);
+    $medicalfileID = $request->id;
 
-    // Handle file upload
-    if ($request->hasFile('medical_file')) {
-      // Get the uploaded file
-      $file = $request->file('medical_file');
+    if ($medicalfileID) {
+      // update the value
+      // Retrieve the old file path
+      $oldMedicalFile = MedicalFile::find($medicalfileID);
+      $oldFilePath = $oldMedicalFile->file_path;
+      // Delete the old file
+      if ($oldFilePath && Storage::exists($oldFilePath)) {
+        Storage::delete($oldFilePath);
+      }
+      // Handle file upload
+      if ($request->hasFile('medical_file')) {
+        // Get the uploaded file
+        $file = $request->file('medical_file');
 
-      // Generate a custom filename based on the original filename
-      $customFileName = $request->file_name . '.' . $file->getClientOriginalExtension();
+        // Generate a custom filename based on the original filename
+        $customFileName = $request->file_name . '.' . $file->getClientOriginalExtension();
 
-      // Store the file with the custom filename and get its path
-      $filePath = $file->storeAs('medical_files', $customFileName);
+        // Store the file with the custom filename and get its path
+        $filePath = $file->storeAs('medical_files', $customFileName);
+      }
+      $medicalfileID = MedicalFile::updateOrCreate(
+        ['id' => $medicalfileID],
+        [
+          'file_name' => $request->file_name, 'description' => $request->description, 'patient_id' => $request->patient_id,
+          'file_path' => $filePath,
+        ]
+      );
+
+      // user updated
+      return response()->json('Updated');
+    } else {
+
+      // Handle file upload
+      if ($request->hasFile('medical_file')) {
+        // Get the uploaded file
+        $file = $request->file('medical_file');
+
+        // Generate a custom filename based on the original filename
+        $customFileName = $request->file_name . '.' . $file->getClientOriginalExtension();
+
+        // Store the file with the custom filename and get its path
+        $filePath = $file->storeAs('medical_files', $customFileName);
+      }
+
+      // Create a new MedicalFile instance
+      $medicalFile = new MedicalFile();
+      $medicalFile->file_name = $request->file_name;
+      $medicalFile->description = $request->description;
+      $medicalFile->patient_id = $request->patient_id;
+      $medicalFile->file_path = $filePath; // Store the file path
+
+      // Save the MedicalFile instance to the database
+      $medicalFile->save();
+
+      // Return a response indicating success
+      return response()->json('Created');
     }
-
-    // Create a new MedicalFile instance
-    $medicalFile = new MedicalFile();
-    $medicalFile->file_name = $request->file_name;
-    $medicalFile->description = $request->description;
-    $medicalFile->patient_id = $request->patient_id;
-    $medicalFile->file_path = $filePath; // Store the file path
-
-    // Save the MedicalFile instance to the database
-    $medicalFile->save();
-
-    // Return a response indicating success
-    return response()->json('Created');
   }
 
 
@@ -150,9 +185,13 @@ class MedicalFileManagement extends Controller
   /**
    * Show the form for editing the specified resource.
    */
-  public function edit(string $id)
+  public function edit($id)
   {
-    //
+    $where = ['id' => $id];
+
+    $medicalFile = MedicalFile::where($where)->first();
+
+    return response()->json($medicalFile);
   }
 
   /**
@@ -166,8 +205,16 @@ class MedicalFileManagement extends Controller
   /**
    * Remove the specified resource from storage.
    */
-  public function destroy(string $id)
+  public function destroy($id)
   {
-    //
+
+    // Retrieve the old file path
+    $oldMedicalFile = MedicalFile::find($id);
+    $oldFilePath = $oldMedicalFile->file_path;
+    // Delete the old file
+    if ($oldFilePath && Storage::exists($oldFilePath)) {
+      Storage::delete($oldFilePath);
+    }
+    $medicalFile = MedicalFile::where('id', $id)->delete();
   }
 }

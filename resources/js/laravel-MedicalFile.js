@@ -104,9 +104,12 @@ $(function () {
           //created_at
           targets: 4,
           render: function (data, type, full, meta) {
-            var $created_at = full['created_at'];
-
-            return '<span class="created_at">' + $created_at + '</span>';
+              var created_at = full['created_at'];
+              // Parse the timestamp into a Date object
+              var date = new Date(created_at);
+              // Format the date to display only the date part (YYYY-MM-DD)
+              var formatted_date = date.toISOString().split('T')[0];
+              return '<span class="created_at">' + formatted_date + '</span>';
           }
         },
 
@@ -195,11 +198,11 @@ $(function () {
             },
             {
               extend: 'csv',
-              title: 'Users',
+              title: 'Medical File',
               text: '<i class="ti ti-file-text me-2" ></i>Csv',
               className: 'dropdown-item',
               exportOptions: {
-                columns: [2, 3],
+                columns: [2, 3, 4],
                 // prevent avatar to be print
                 format: {
                   body: function (inner, coldex, rowdex) {
@@ -207,7 +210,7 @@ $(function () {
                     var el = $.parseHTML(inner);
                     var result = '';
                     $.each(el, function (index, item) {
-                      if (item.classList.contains('user-name')) {
+                      if (item.classList.contains('file_name')) {
                         result = result + item.lastChild.textContent;
                       } else result = result + item.innerText;
                     });
@@ -218,11 +221,11 @@ $(function () {
             },
             {
               extend: 'excel',
-              title: 'Users',
+              title: 'Medical File',
               text: '<i class="ti ti-file-spreadsheet me-2"></i>Excel',
               className: 'dropdown-item',
               exportOptions: {
-                columns: [2, 3],
+                columns: [2, 3, 4],
                 // prevent avatar to be display
                 format: {
                   body: function (inner, coldex, rowdex) {
@@ -230,7 +233,7 @@ $(function () {
                     var el = $.parseHTML(inner);
                     var result = '';
                     $.each(el, function (index, item) {
-                      if (item.classList.contains('user-name')) {
+                      if (item.classList.contains('file_name')) {
                         result = result + item.lastChild.textContent;
                       } else result = result + item.innerText;
                     });
@@ -383,7 +386,7 @@ $(document).on('click', '.download-record', function () {
         Swal.fire({
           icon: 'success',
           title: 'Deleted!',
-          text: 'The user has been deleted!',
+          text: 'The Medical file has been deleted!',
           customClass: {
             confirmButton: 'btn btn-success'
           }
@@ -391,7 +394,7 @@ $(document).on('click', '.download-record', function () {
       } else if (result.dismiss === Swal.DismissReason.cancel) {
         Swal.fire({
           title: 'Cancelled',
-          text: 'The User is not deleted!',
+          text: 'The Medical file is not deleted!',
           icon: 'error',
           customClass: {
             confirmButton: 'btn btn-success'
@@ -437,14 +440,9 @@ $(document).on('click', '.download-record', function () {
     // get data
     $.get(`${baseUrl}MedicalFile-list\/${user_id}\/edit`, function (data) {
 
-      $('#user_id').val(data.id);
-      $('#add-user-fullname').val(data.name);
-      $('#add-user-email').val(data.email);
-      $('#add-user-contact').val(data.contact);
-      $('#add-user-license_number').val(data.license_number);
-      $('#add-user-date_of_birth').val(data.date_of_birth);
-      $('#add-user-gender').val(data.gender);
-      $('#add-user-address').val(data.address);
+      $('#medical_file_id').val(data.id);
+      $('#add-medical-file-name').val(data.file_name);
+      $('#add-medical-file-description').val(data.description);
     });
   });
 
@@ -531,7 +529,7 @@ formData.append('medical_file', $('#add-medical-file')[0].files[0]); // Append t
         Swal.fire({
           icon: 'success',
           title: `Successfully ${status}!`,
-          text: `User ${status} Successfully.`,
+          text: `Medical file ${status} Successfully.`,
           customClass: {
             confirmButton: 'btn btn-success'
           }

@@ -156,7 +156,7 @@
 
             <!-- Project table -->
             <div class="card mb-4">
-                <h5 class="card-header">User's Projects List</h5>
+                <h5 class="card-header">Patient's Medical file List</h5>
                 <div class="table-responsive mb-3">
                     <table class="table datatable-project border-top">
                         <thead>
