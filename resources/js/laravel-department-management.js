@@ -10,7 +10,7 @@ $(function () {
   var dt_user_table = $('.datatables-users'),
     select2 = $('.select2'),
     userView = baseUrl + 'app/user/view/account',
-    offCanvasForm = $('#offcanvasAddUser');
+    offCanvasForm = $('#offcanvasAdddepartment');
 
   // if (select2.length) {
   //   var $this = select2;
@@ -33,7 +33,7 @@ $(function () {
       processing: true,
       serverSide: true,
       ajax: {
-        url: baseUrl + 'patient-list',
+        url: baseUrl + 'department-list',
 
       },
       columns: [
@@ -42,7 +42,7 @@ $(function () {
         { data: 'id' },
         { data: 'name' },
         { data: 'email' },
-        { data: 'license_number' },
+        { data: 'created_at' },
         { data: 'contact' },
         { data: 'action' }
       ],
@@ -112,13 +112,16 @@ $(function () {
           }
         },
         {
-          //license_number
+          //created_at
           targets: 4,
           render: function (data, type, full, meta) {
-            var $license_number = full['license_number'];
-
-            return '<span class="license_number">' + $license_number + '</span>';
-          }
+            var created_at = full['created_at'];
+            // Parse the timestamp into a Date object
+            var date = new Date(created_at);
+            // Format the date to display only the date part (YYYY-MM-DD)
+            var formatted_date = date.toISOString().split('T')[0];
+            return '<span class="created_at">' + formatted_date + '</span>';
+        }
         },
 
         {
@@ -140,7 +143,7 @@ $(function () {
 
             return (
               '<div class="d-inline-block text-nowrap">' +
-              `<button class="btn btn-sm btn-icon edit-record" data-id="${full['id']}" data-bs-toggle="offcanvas" data-bs-target="#offcanvasAddUser"><i class="ti ti-edit"></i></button>` +
+              `<button class="btn btn-sm btn-icon edit-record" data-id="${full['id']}" data-bs-toggle="offcanvas" data-bs-target="#offcanvasAdddepartment"><i class="ti ti-edit"></i></button>` +
               `<button class="btn btn-sm btn-icon delete-record" data-id="${full['id']}"><i class="ti ti-trash"></i></button>` +
               '<button class="btn btn-sm btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></button>' +
               '<div class="dropdown-menu dropdown-menu-end m-0">' +
@@ -306,11 +309,11 @@ $(function () {
           ]
         },
         {
-          text: '<i class="ti ti-plus me-0 me-sm-1"></i><span class="d-none d-sm-inline-block">Add New Patient</span>',
+          text: '<i class="ti ti-plus me-0 me-sm-1"></i><span class="d-none d-sm-inline-block">Add New department</span>',
           className: 'add-new btn btn-primary waves-effect waves-light',
           attr: {
             'data-bs-toggle': 'offcanvas',
-            'data-bs-target': '#offcanvasAddUser'
+            'data-bs-target': '#offcanvasAdddepartment'
           }
         }
       ],
@@ -380,7 +383,7 @@ $('#filter-department').change(function () {
         // delete the data
         $.ajax({
           type: 'DELETE',
-          url: `${baseUrl}patient-list/${user_id}`,
+          url: `${baseUrl}department-list/${user_id}`,
           success: function () {
             dt_user.draw();
           },
@@ -393,7 +396,7 @@ $('#filter-department').change(function () {
         Swal.fire({
           icon: 'success',
           title: 'Deleted!',
-          text: 'The user has been deleted!',
+          text: 'The department has been deleted!',
           customClass: {
             confirmButton: 'btn btn-success'
           }
@@ -401,7 +404,7 @@ $('#filter-department').change(function () {
       } else if (result.dismiss === Swal.DismissReason.cancel) {
         Swal.fire({
           title: 'Cancelled',
-          text: 'The User is not deleted!',
+          text: 'The department is not deleted!',
           icon: 'error',
           customClass: {
             confirmButton: 'btn btn-success'
@@ -414,15 +417,15 @@ $('#filter-department').change(function () {
   $(document).on('click', '.view-record', function(event) {
     event.preventDefault(); // Prevent the default link behavior
 
-    var patientId = $(this).data('id');
+    var departmentId = $(this).data('id');
 
     // Make an AJAX request to the show route
     $.ajax({
-        url: '/patient-list/' + patientId, // Adjust the URL according to your route setup
+        url: '/department-list/' + departmentId, // Adjust the URL according to your route setup
         method: 'GET',
         success: function(response) {
             // Handle the successful response, for example, redirecting to the show page
-            window.location.href = '/patient-list/' + patientId;
+            window.location.href = '/department-list/' + departmentId;
         },
         error: function(xhr, status, error) {
             // Handle any errors, for example, displaying an error message
@@ -442,27 +445,23 @@ $('#filter-department').change(function () {
     }
 
     // changing the title of offcanvas
-    $('#offcanvasAddUserLabel').html('Edit Patient');
+    $('#offcanvasAdddepartmentLabel').html('Edit department');
 
     // get data
-    $.get(`${baseUrl}patient-list\/${user_id}\/edit`, function (data) {
+    $.get(`${baseUrl}department-list\/${user_id}\/edit`, function (data) {
 
-      $('#user_id').val(data.id);
-      $('#add-user-fullname').val(data.name);
-      $('#add-user-email').val(data.email);
-      $('#add-user-contact').val(data.contact);
-      $('#add-user-license_number').val(data.license_number);
-      $('#add-user-date_of_birth').val(data.date_of_birth);
-      $('#add-user-gender').val(data.gender);
-      $('#add-user-address').val(data.address);
+      $('#department_id').val(data.id);
+      $('#add-department-name').val(data.name);
+      $('#add-department-email').val(data.email);
+      $('#add-department-contact').val(data.contact);
     });
   });
 
   // changing the title
   $('.add-new').on('click', function () {
     $('#user_id').val(''); //reseting input field
-    $('#offcanvasAddUserLabel').html('Add Patient');
-    $('#department').val("");
+    $('#offcanvasAdddepartmentLabel').html('Add department');
+
   });
 
   // Filter form control to default size
@@ -473,15 +472,15 @@ $('#filter-department').change(function () {
   }, 300);
 
   // validating form and updating user's data
-  const addNewUserForm = document.getElementById('addNewUserForm');
+  const addNewdepartmentForm = document.getElementById('addNewdepartmentForm');
 
   // user form validation
-  const fv = FormValidation.formValidation(addNewUserForm, {
+  const fv = FormValidation.formValidation(addNewdepartmentForm, {
     fields: {
       name: {
         validators: {
           notEmpty: {
-            message: 'Please enter fullname'
+            message: 'Please enter  department name'
           }
         }
       },
@@ -495,34 +494,13 @@ $('#filter-department').change(function () {
           }
         }
       },
-      userContact: {
+      contact: {
         validators: {
           notEmpty: {
             message: 'Please enter your contact'
           }
         }
       },
-      license_number: {
-        validators: {
-          notEmpty: {
-            message: 'Please enter your license_number'
-          }
-        }
-      },
-      date_of_birth: {
-        validators: {
-          notEmpty: {
-            message: 'Please enter your date_of_birth'
-          }
-        }
-      },
-      address: {
-        validators: {
-          notEmpty: {
-            message: 'Please enter your address'
-          }
-        }
-      }
     },
     plugins: {
       trigger: new FormValidation.plugins.Trigger(),
@@ -542,8 +520,8 @@ $('#filter-department').change(function () {
   }).on('core.form.valid', function () {
     // adding or updating user when form successfully validate
     $.ajax({
-      data: $('#addNewUserForm').serialize(),
-      url: `${baseUrl}patient-list`,
+      data: $('#addNewdepartmentForm').serialize(),
+      url: `${baseUrl}department-list`,
       type: 'POST',
       success: function (status) {
         dt_user.draw();
@@ -553,7 +531,7 @@ $('#filter-department').change(function () {
         Swal.fire({
           icon: 'success',
           title: `Successfully ${status}!`,
-          text: `User ${status} Successfully.`,
+          text: `department ${status} Successfully.`,
           customClass: {
             confirmButton: 'btn btn-success'
           }

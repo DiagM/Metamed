@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\laravel_example;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendEmailJob;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class PatientManagement extends Controller
@@ -124,8 +126,15 @@ class PatientManagement extends Controller
   public function store(Request $request)
   {
     $userID = $request->id;
+    // Check if the license number is unique
+    $existingUserWithLicense = User::where('license_number', $request->license_number)->first();
 
+    if ($existingUserWithLicense && $existingUserWithLicense->id !== $userID) {
+      // If a user with the same license number exists and it's not the same user being updated
+      return response()->json(['message' => "License number already exists"], 422);
+    }
     if ($userID) {
+
       // update the value
       $users = User::updateOrCreate(
         ['id' => $userID],
@@ -143,7 +152,7 @@ class PatientManagement extends Controller
       $userEmail = User::where('email', $request->email)->first();
 
       if (empty($userEmail)) {
-        $users = User::updateOrCreate(
+        $user = User::updateOrCreate(
           ['id' => $userID],
           [
             'name' => $request->name, 'email' => $request->email, 'password' => bcrypt(Str::random(10)),
@@ -153,12 +162,22 @@ class PatientManagement extends Controller
 
           ]
         );
+        // Send password reset email
+        $token = Str::random(60);
+
+        DB::table('password_reset_tokens')->updateOrInsert(
+          ['email' => $user->email],
+          ['token' => $token, 'created_at' => now()]
+        );
+
+        // $user->notify(new HospitalPasswordReset($token));
+        SendEmailJob::dispatch($token, $user->email);
 
         // user created
         return response()->json('Created');
       } else {
         // user already exist
-        return response()->json(['message' => "already exits"], 422);
+        return response()->json(['message' => "Email already exists"], 422);
       }
     }
   }

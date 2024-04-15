@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\laravel_example;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendEmailJob;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class UserManagement extends Controller
@@ -157,14 +159,23 @@ class UserManagement extends Controller
       $userEmail = User::where('email', $request->email)->first();
 
       if (empty($userEmail)) {
-        $users = User::updateOrCreate(
+        $user = User::updateOrCreate(
           ['id' => $userID],
           [
             'name' => $request->name, 'email' => $request->email, 'password' => bcrypt(Str::random(10)),
             'contact' => $request->userContact, 'license_number' => $request->license_number, 'department' => $request->department
           ]
         );
+        // Send password reset email
+        $token = Str::random(60);
 
+        DB::table('password_reset_tokens')->updateOrInsert(
+          ['email' => $user->email],
+          ['token' => $token, 'created_at' => now()]
+        );
+
+        // $user->notify(new HospitalPasswordReset($token));
+        SendEmailJob::dispatch($token, $user->email);
         // user created
         return response()->json('Created');
       } else {

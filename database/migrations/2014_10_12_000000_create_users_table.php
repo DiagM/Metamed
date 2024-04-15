@@ -23,6 +23,8 @@ return new class extends Migration
       $table->date('date_of_birth')->nullable();
       $table->string('gender')->nullable();
       $table->text('address')->nullable();
+      $table->double('latitude', 10, 8)->nullable();
+      $table->double('longitude', 10, 8)->nullable();
       $table->rememberToken();
       $table->timestamps();
     });
