@@ -17,9 +17,12 @@ return new class extends Migration
       $table->string('email')->unique();
       $table->timestamp('email_verified_at')->nullable();
       $table->string('password');
+      $table->unsignedBigInteger('hospital_id')->nullable();
+      $table->foreign('hospital_id')->references('id')->on('users')->onDelete('cascade');
+      $table->unsignedBigInteger('department_id')->nullable();
+      $table->foreign('department_id')->references('id')->on('users')->onDelete('cascade');
       $table->string('license_number')->nullable();
       $table->string('contact')->nullable();
-      $table->string('department')->nullable();
       $table->date('date_of_birth')->nullable();
       $table->string('gender')->nullable();
       $table->text('address')->nullable();

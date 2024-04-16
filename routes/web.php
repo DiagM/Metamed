@@ -206,6 +206,7 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/app/email', [Email::class, 'index'])->name('app-email');
   Route::get('/app/chat', [Chat::class, 'index'])->name('app-chat');
   Route::get('/app/calendar', [Calendar::class, 'index'])->name('app-calendar');
+  Route::get('/calendar/events', [Calendar::class, 'getEvents'])->name('app-calendar-events');
   Route::get('/app/kanban', [Kanban::class, 'index'])->name('app-kanban');
   Route::get('/app/ecommerce/dashboard', [EcommerceDashboard::class, 'index'])->name('app-ecommerce-dashboard');
   Route::get('/app/ecommerce/product/list', [EcommerceProductList::class, 'index'])->name('app-ecommerce-product-list');

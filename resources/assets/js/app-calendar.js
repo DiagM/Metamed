@@ -220,33 +220,32 @@ document.addEventListener('DOMContentLoaded', function () {
     // --------------------------------------------------------------------------------------------------
     function fetchEvents(info, successCallback) {
       // Fetch Events from API endpoint reference
-      /* $.ajax(
-        {
-          url: '../../../app-assets/data/app-calendar-events.js',
-          type: 'GET',
-          success: function (result) {
-            // Get requested calendars as Array
-            var calendars = selectedCalendars();
+      fetch('/calendar/events')
+          .then(response => {
+              if (!response.ok) {
+                  throw new Error('Network response was not ok');
+              }
+              return response.json();
+          })
+          .then(data => {
+              // Prepare events data in the correct format
+              let events = data.map(event => ({
+                  id: event.id,
+                  title: event.title,
+                  start: event.start,
+                  end: event.end,
+                  extendedProps: {
+                      calendar: event.extendedProps.calendar,
 
-            return [result.events.filter(event => calendars.includes(event.extendedProps.calendar))];
-          },
-          error: function (error) {
-            console.log(error);
-          }
-        }
-      ); */
+                  }
+              }));
+              successCallback(events);
+          })
+          .catch(error => {
+              console.error('Error fetching calendar events:', error);
+          });
+  }
 
-      let calendars = selectedCalendars();
-      // We are reading event object from app-calendar-events.js file directly by including that file above app-calendar file.
-      // You should make an API call, look into above commented API call for reference
-      let selectedEvents = currentEvents.filter(function (event) {
-        // console.log(event.extendedProps.calendar.toLowerCase());
-        return calendars.includes(event.extendedProps.calendar.toLowerCase());
-      });
-      // if (selectedEvents.length > 0) {
-      successCallback(selectedEvents);
-      // }
-    }
 
     // Init FullCalendar
     // ------------------------------------------------

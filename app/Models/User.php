@@ -24,10 +24,11 @@ class User extends Authenticatable implements CanResetPassword
     'name',
     'email',
     'password',
+    'hospital_id',
+    'department_id',
     'contact',
     'license_number',
     'date_of_birth',
-    'department',
     'address',
     'gender',
     'latitude',
@@ -57,5 +58,31 @@ class User extends Authenticatable implements CanResetPassword
   public function medicalFiles()
   {
     return $this->hasMany(MedicalFile::class);
+  }
+  public function doctorReservations()
+  {
+    return $this->hasMany(Reservation::class, 'doctor_id');
+  }
+
+  public function patientReservations()
+  {
+    return $this->hasMany(Reservation::class, 'patient_id');
+  }
+  public function hospital()
+  {
+    return $this->belongsTo(User::class);
+  }
+  public function department()
+  {
+    return $this->belongsTo(User::class);
+  }
+  public function hospitals()
+  {
+    return $this->hasMany(User::class, 'hospital_id');
+  }
+
+  public function departments()
+  {
+    return $this->hasMany(User::class, 'department_id');
   }
 }

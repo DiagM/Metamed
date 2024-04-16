@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Jobs\SendEmailJob;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 class UserManagement extends Controller
 {
@@ -17,7 +19,14 @@ class UserManagement extends Controller
    */
   public function UserManagement()
   {
-    $users = User::all();
+    // Get the "doctor" role
+    $doctorRole = Role::findByName('doctor');
+
+
+    // Retrieve users with the "doctor" role
+    $users = User::whereHas('roles', function ($query) use ($doctorRole) {
+      $query->where('role_id', $doctorRole->id);
+    })->where('department_id', Auth::id())->get();
     $userCount = $users->count();
     $verified = User::whereNotNull('email_verified_at')->get()->count();
     $notVerified = User::whereNull('email_verified_at')->get()->count();
@@ -47,80 +56,79 @@ class UserManagement extends Controller
       5 => 'department',
     ];
 
-    $search = [];
+    // Get the "department" role
+    $departmentRole = Role::where('name', 'doctor')->first();
 
-    $totalData = User::count();
+    // Initialize the user query builder with the "department" role constraint
+    $usersQuery = User::whereHas('roles', function ($query) use ($departmentRole) {
+      $query->where('id', $departmentRole->id);
+    })->where('department_id', Auth::id())->with('department');
 
-    $totalFiltered = $totalData;
-
-    $limit = $request->input('length');
-    $start = $request->input('start');
-    $order = $columns[$request->input('order.0.column')];
-    $dir = $request->input('order.0.dir');
-
-    if (empty($request->input('search.value'))) {
-      $users = User::offset($start)
-        ->limit($limit)
-        ->orderBy($order, $dir)
-        ->get();
-    } else {
+    // Apply search filter if provided
+    if ($request->filled('search.value')) {
       $search = $request->input('search.value');
-
-      $users = User::where('id', 'LIKE', "%{$search}%")
-        ->orWhere('name', 'LIKE', "%{$search}%")
-        ->orWhere('email', 'LIKE', "%{$search}%")
-        ->orWhere('department', 'LIKE', "%{$search}%")
-        ->offset($start)
-        ->limit($limit)
-        ->orderBy($order, $dir)
-        ->get();
-
-      $totalFiltered = User::where('id', 'LIKE', "%{$search}%")
-        ->orWhere('name', 'LIKE', "%{$search}%")
-        ->orWhere('email', 'LIKE', "%{$search}%")
-        ->orWhere('department', 'LIKE', "%{$search}%")
-        ->count();
-    }
-    // Additional filter for department
-    if (!empty($request->input('department'))) {
-      $department = $request->input('department');
-      $users = $users->where('department', $department);
-      $totalFiltered = $users->count();
-    }
-    $data = [];
-
-    if (!empty($users)) {
-      // providing a dummy id instead of database ids
-      $ids = $start;
-
-      foreach ($users as $user) {
-        $nestedData['id'] = $user->id;
-        $nestedData['fake_id'] = ++$ids;
-        $nestedData['name'] = $user->name;
-        $nestedData['email'] = $user->email;
-        $nestedData['license_number'] = $user->license_number;
-        $nestedData['department'] = $user->department;
-
-        $data[] = $nestedData;
-      }
+      $usersQuery->where(function ($query) use ($search) {
+        $query->where('id', 'LIKE', "%{$search}%")
+          ->orWhere('name', 'LIKE', "%{$search}%")
+          ->orWhere('email', 'LIKE', "%{$search}%")
+          ->orWhere('license_number', 'LIKE', "%{$search}%")
+          ->orWhereHas('department', function ($query) use ($search) {
+            $query->where('name', 'LIKE', "%{$search}%");
+          });
+      });
     }
 
-    if ($data) {
-      return response()->json([
-        'draw' => intval($request->input('draw')),
-        'recordsTotal' => intval($totalData),
-        'recordsFiltered' => intval($totalFiltered),
-        'code' => 200,
-        'data' => $data,
-      ]);
+
+    // Get the total count of filtered records before pagination
+    $totalFiltered = $usersQuery->count();
+
+    // Apply pagination and ordering
+    $start = $request->input('start', 0);
+    $limit = $request->input('length', 10);
+    $orderColumnIndex = $request->input('order.0.column', 1);
+    $orderDirection = $request->input('order.0.dir', 'asc');
+
+    // Determine the column to order by
+    $orderColumn = $columns[$orderColumnIndex];
+
+    // If ordering by department name
+    if ($orderColumn == 'department') {
+      // Order by department name (assuming department name is stored in the users table)
+      $usersQuery->orderBy('department_id', $orderDirection);
     } else {
-      return response()->json([
-        'message' => 'Internal Server Error',
-        'code' => 500,
-        'data' => [],
-      ]);
+      // Otherwise, order by other columns
+      $usersQuery->orderBy($orderColumn, $orderDirection);
     }
+
+    $users = $usersQuery->offset($start)
+      ->limit($limit)
+      ->get();
+
+
+    // Prepare data for DataTables response
+    $data = [];
+    foreach ($users as $index => $user) {
+      $data[] = [
+        'id' => $user->id,
+        'fake_id' => $start + $index + 1, // Generate a unique identifier for the record
+        'name' => $user->name,
+        'email' => $user->email,
+        'license_number' => $user->license_number,
+        'department' => $user->department->name,
+      ];
+    }
+
+    // Return JSON response
+    return response()->json([
+      'draw' => intval($request->input('draw')),
+      'recordsTotal' => User::count(), // Total records in the users table
+      'recordsFiltered' => $totalFiltered,
+      'code' => 200,
+      'data' => $data,
+    ]);
   }
+
+
 
   /**
    * Show the form for creating a new resource.
@@ -148,7 +156,7 @@ class UserManagement extends Controller
         ['id' => $userID],
         [
           'name' => $request->name, 'email' => $request->email, 'contact' => $request->userContact,
-          'license_number' => $request->license_number, 'department' => $request->department
+          'license_number' => $request->license_number, 'department_id' => Auth::id()
         ]
       );
 
@@ -163,9 +171,10 @@ class UserManagement extends Controller
           ['id' => $userID],
           [
             'name' => $request->name, 'email' => $request->email, 'password' => bcrypt(Str::random(10)),
-            'contact' => $request->userContact, 'license_number' => $request->license_number, 'department' => $request->department
+            'contact' => $request->userContact, 'license_number' => $request->license_number, 'department_id' => Auth::id()
           ]
         );
+        $user->assignRole('doctor');
         // Send password reset email
         $token = Str::random(60);
 
@@ -174,7 +183,7 @@ class UserManagement extends Controller
           ['token' => $token, 'created_at' => now()]
         );
 
-        // $user->notify(new HospitalPasswordReset($token));
+        // $user->notify(new doctorPasswordReset($token));
         SendEmailJob::dispatch($token, $user->email);
         // user created
         return response()->json('Created');

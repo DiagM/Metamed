@@ -8,12 +8,20 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 class PatientManagement extends Controller
 {
   public function patientManagement()
   {
-    $users = User::all();
+    // Get the "hospital" role
+    $hospitalRole = Role::findByName('patient');
+
+
+    // Retrieve users with the "hospital" role
+    $users = User::whereHas('roles', function ($query) use ($hospitalRole) {
+      $query->where('role_id', $hospitalRole->id);
+    })->get();
     $userCount = $users->count();
     $verified = User::whereNotNull('email_verified_at')->get()->count();
     $notVerified = User::whereNull('email_verified_at')->get()->count();
@@ -38,78 +46,61 @@ class PatientManagement extends Controller
       3 => 'email',
       4 => 'license_number',
       5 => 'contact',
-
     ];
 
-    $search = [];
+    // Get the "department" role
+    $departmentRole = Role::findByName('patient');
 
-    $totalData = User::count();
+    // Initialize the user query builder with the "department" role constraint
+    $usersQuery = User::whereHas('roles', function ($query) use ($departmentRole) {
+      $query->where('role_id', $departmentRole->id);
+    });
 
-    $totalFiltered = $totalData;
-
-    $limit = $request->input('length');
-    $start = $request->input('start');
-    $order = $columns[$request->input('order.0.column')];
-    $dir = $request->input('order.0.dir');
-
-    if (empty($request->input('search.value'))) {
-      $users = User::offset($start)
-        ->limit($limit)
-        ->orderBy($order, $dir)
-        ->get();
-    } else {
+    // Apply search filter if provided
+    if ($request->filled('search.value')) {
       $search = $request->input('search.value');
-
-      $users = User::where('id', 'LIKE', "%{$search}%")
-        ->orWhere('name', 'LIKE', "%{$search}%")
-        ->orWhere('email', 'LIKE', "%{$search}%")
-        ->orWhere('license_number', 'LIKE', "%{$search}%")
-        ->offset($start)
-        ->limit($limit)
-        ->orderBy($order, $dir)
-        ->get();
-
-      $totalFiltered = User::where('id', 'LIKE', "%{$search}%")
-        ->orWhere('name', 'LIKE', "%{$search}%")
-        ->orWhere('email', 'LIKE', "%{$search}%")
-        ->orWhere('license_number', 'LIKE', "%{$search}%")
-        ->count();
+      $usersQuery->where(function ($query) use ($search) {
+        $query->where('id', 'LIKE', "%{$search}%")
+          ->orWhere('name', 'LIKE', "%{$search}%")
+          ->orWhere('email', 'LIKE', "%{$search}%")
+          ->orWhere('license_number', 'LIKE', "%{$search}%");
+      });
     }
 
+    // Get the total count of filtered records
+    $totalFiltered = $usersQuery->count();
+
+    // Apply pagination and ordering
+    $start = $request->input('start', 0);
+    $limit = $request->input('length', 10);
+    $orderColumn = $columns[$request->input('order.0.column', 1)];
+    $orderDirection = $request->input('order.0.dir', 'asc');
+    $users = $usersQuery->offset($start)
+      ->limit($limit)
+      ->orderBy($orderColumn, $orderDirection)
+      ->get();
+
+    // Prepare data for DataTables response
     $data = [];
-
-    if (!empty($users)) {
-      // providing a dummy id instead of database ids
-      $ids = $start;
-
-      foreach ($users as $user) {
-        $nestedData['id'] = $user->id;
-        $nestedData['fake_id'] = ++$ids;
-        $nestedData['name'] = $user->name;
-        $nestedData['email'] = $user->email;
-        $nestedData['license_number'] = $user->license_number;
-        $nestedData['contact'] = $user->contact;
-
-
-        $data[] = $nestedData;
-      }
+    foreach ($users as $index => $user) {
+      $data[] = [
+        'id' => $user->id,
+        'fake_id' => $start + $index + 1, // Generate a unique identifier for the record
+        'name' => $user->name,
+        'email' => $user->email,
+        'license_number' => $user->license_number,
+        'contact' => $user->contact,
+      ];
     }
 
-    if ($data) {
-      return response()->json([
-        'draw' => intval($request->input('draw')),
-        'recordsTotal' => intval($totalData),
-        'recordsFiltered' => intval($totalFiltered),
-        'code' => 200,
-        'data' => $data,
-      ]);
-    } else {
-      return response()->json([
-        'message' => 'Internal Server Error',
-        'code' => 500,
-        'data' => [],
-      ]);
-    }
+    // Return JSON response
+    return response()->json([
+      'draw' => intval($request->input('draw')),
+      'recordsTotal' => $users->count(), // Total records in the users table
+      'recordsFiltered' => $totalFiltered,
+      'code' => 200,
+      'data' => $data,
+    ]);
   }
 
   /**
@@ -162,6 +153,7 @@ class PatientManagement extends Controller
 
           ]
         );
+        $user->assignRole('patient');
         // Send password reset email
         $token = Str::random(60);
 

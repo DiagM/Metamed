@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Jobs\SendEmailJob;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Str;
@@ -21,7 +22,7 @@ class DepartmentManagement extends Controller
     // Retrieve users with the "department" role
     $users = User::whereHas('roles', function ($query) use ($departmentRole) {
       $query->where('role_id', $departmentRole->id);
-    })->get();
+    })->where('hospital_id', Auth::id())->get();
 
     $userCount = $users->count();
     $verified = User::whereNotNull('email_verified_at')->get()->count();
@@ -127,6 +128,7 @@ class DepartmentManagement extends Controller
         ['id' => $userID],
         [
           'name' => $request->name, 'email' => $request->email, 'contact' => $request->contact,
+          'hospital_id' =>  Auth::id(),
 
         ]
       );
@@ -142,7 +144,7 @@ class DepartmentManagement extends Controller
           ['id' => $userID],
           [
             'name' => $request->name, 'email' => $request->email, 'password' => bcrypt(Str::random(10)),
-            'contact' => $request->contact,
+            'contact' => $request->contact, 'hospital_id' =>  Auth::id(),
 
           ]
         );
