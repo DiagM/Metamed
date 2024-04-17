@@ -11,6 +11,7 @@ class Reservation extends Model
 
   protected $fillable = [
     'name',
+    'label',
     'doctor_id',
     'patient_id',
     'start_datetime',

@@ -6,22 +6,28 @@ use App\Http\Controllers\Controller;
 use App\Jobs\SendEmailJob;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
+
 
 class PatientManagement extends Controller
 {
   public function patientManagement()
   {
-    // Get the "hospital" role
-    $hospitalRole = Role::findByName('patient');
+    // Get the "patient" role
+    $patientRole = Role::findByName('patient');
+    if (Auth::user()->hasRole('doctor')) {
+      $doctor = Auth::user();
+      $users = $doctor->patients()->get();
+    } else {
+      // Retrieve users with the "patient" role
+      $users = User::whereHas('roles', function ($query) use ($patientRole) {
+        $query->where('role_id', $patientRole->id);
+      })->get();
+    }
 
-
-    // Retrieve users with the "hospital" role
-    $users = User::whereHas('roles', function ($query) use ($hospitalRole) {
-      $query->where('role_id', $hospitalRole->id);
-    })->get();
     $userCount = $users->count();
     $verified = User::whereNotNull('email_verified_at')->get()->count();
     $notVerified = User::whereNull('email_verified_at')->get()->count();
@@ -47,14 +53,26 @@ class PatientManagement extends Controller
       4 => 'license_number',
       5 => 'contact',
     ];
-
     // Get the "department" role
     $departmentRole = Role::findByName('patient');
+    if (Auth::user()->hasRole('doctor')) {
+      $doctor = Auth::user();
+      // Retrieve patients related to the authenticated doctor
+      $usersQuery = User::whereHas('patients', function ($query) use ($doctor) {
+        // Filter patients based on the relationship with the authenticated doctor
+        $query->where('users.id', $doctor->id);
+      });
+    } else {
+      // Initialize the user query builder with the "department" role constraint
+      $usersQuery = User::whereHas('roles', function ($query) use ($departmentRole) {
+        $query->where('role_id', $departmentRole->id);
+      });
+    }
 
-    // Initialize the user query builder with the "department" role constraint
-    $usersQuery = User::whereHas('roles', function ($query) use ($departmentRole) {
-      $query->where('role_id', $departmentRole->id);
-    });
+
+
+
+
 
     // Apply search filter if provided
     if ($request->filled('search.value')) {
@@ -117,59 +135,76 @@ class PatientManagement extends Controller
   public function store(Request $request)
   {
     $userID = $request->id;
-    // Check if the license number is unique
-    $existingUserWithLicense = User::where('license_number', $request->license_number)->first();
+    if (Auth::user()->hasRole('doctor')) {
+      $doctor = Auth::user();
+      // Check if the license number is unique
+      $existingUserWithLicense = User::where('license_number', $request->license_number)->first();
 
-    if ($existingUserWithLicense && $existingUserWithLicense->id !== $userID) {
-      // If a user with the same license number exists and it's not the same user being updated
-      return response()->json(['message' => "License number already exists"], 422);
-    }
-    if ($userID) {
+      if ($existingUserWithLicense && $existingUserWithLicense->id !== $userID) {
+        // If a user with the same license number exists and it's not the same user being updated
 
-      // update the value
-      $users = User::updateOrCreate(
-        ['id' => $userID],
-        [
-          'name' => $request->name, 'email' => $request->email, 'contact' => $request->userContact,
-          'license_number' => $request->license_number, 'date_of_birth' => $request->date_of_birth,
-          'gender' => $request->gender, 'address' => $request->address,
-        ]
-      );
+        // Check if the authenticated user has a relationship with $existingUserWithLicense
 
-      // user updated
-      return response()->json('Updated');
-    } else {
-      // create new one if email is unique
-      $userEmail = User::where('email', $request->email)->first();
+        if ($doctor->patients->contains($existingUserWithLicense)) {
+          // If the authenticated doctor does  have a relationship with the patient
+          return response()->json(['message' => "License number already exists"], 422);
+        } else {
+          // If the authenticated doctor does not have a relationship with the patient,
+          // create the relationship
+          $doctor->patients()->attach($existingUserWithLicense);
+          return response()->json('Created');
+        }
+      }
 
-      if (empty($userEmail)) {
-        $user = User::updateOrCreate(
+
+      if ($userID) {
+
+        // update the value
+        $users = User::updateOrCreate(
           ['id' => $userID],
           [
-            'name' => $request->name, 'email' => $request->email, 'password' => bcrypt(Str::random(10)),
-            'contact' => $request->userContact, 'license_number' => $request->license_number,
+            'name' => $request->name, 'email' => $request->email, 'contact' => $request->userContact,
+            'license_number' => $request->license_number, 'date_of_birth' => $request->date_of_birth,
             'gender' => $request->gender, 'address' => $request->address,
-            'date_of_birth' => $request->date_of_birth,
-
           ]
         );
-        $user->assignRole('patient');
-        // Send password reset email
-        $token = Str::random(60);
 
-        DB::table('password_reset_tokens')->updateOrInsert(
-          ['email' => $user->email],
-          ['token' => $token, 'created_at' => now()]
-        );
-
-        // $user->notify(new HospitalPasswordReset($token));
-        SendEmailJob::dispatch($token, $user->email);
-
-        // user created
-        return response()->json('Created');
+        // user updated
+        return response()->json('Updated');
       } else {
-        // user already exist
-        return response()->json(['message' => "Email already exists"], 422);
+        // create new one if email is unique
+        $userEmail = User::where('email', $request->email)->first();
+
+        if (empty($userEmail)) {
+          $user = User::updateOrCreate(
+            ['id' => $userID],
+            [
+              'name' => $request->name, 'email' => $request->email, 'password' => bcrypt(Str::random(10)),
+              'contact' => $request->userContact, 'license_number' => $request->license_number,
+              'gender' => $request->gender, 'address' => $request->address,
+              'date_of_birth' => $request->date_of_birth,
+
+            ]
+          );
+          $doctor->patients()->attach($user);
+          $user->assignRole('patient');
+          // Send password reset email
+          $token = Str::random(60);
+
+          DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $user->email],
+            ['token' => $token, 'created_at' => now()]
+          );
+
+          // $user->notify(new HospitalPasswordReset($token));
+          SendEmailJob::dispatch($token, $user->email);
+
+          // user created
+          return response()->json('Created');
+        } else {
+          // user already exist
+          return response()->json(['message' => "Email already exists"], 422);
+        }
       }
     }
   }

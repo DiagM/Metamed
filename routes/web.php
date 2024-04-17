@@ -169,8 +169,8 @@ Route::get('/login', [LoginBasic::class, 'index'])->name('login');
 Route::post('/login', [LoginBasic::class, 'login'])->name('login.post');
 Route::get('/auth/reset-password-basic', [ResetPasswordBasic::class, 'index'])->name('auth-reset-password-basic');
 Route::post('/auth/reset-password-basic', [ResetPasswordBasic::class, 'reset'])->name('password.update');
-Route::get('/auth/forgot-password-basic', [ForgotPasswordBasic::class, 'index'])->name('auth-reset-password-basic');
-Route::post('/auth/forgot-password-basic', [ForgotPasswordBasic::class, 'reset'])->name('auth-reset-password-basic.update');
+Route::get('/auth/forgot-password-basic', [ForgotPasswordBasic::class, 'index'])->name('auth-forgot-password-basic');
+Route::post('/auth/forgot-password-basic', [ForgotPasswordBasic::class, 'reset'])->name('auth-forgot-password-basic.update');
 //authentifucated
 Route::middleware(['auth'])->group(function () {
   // Main Page Route

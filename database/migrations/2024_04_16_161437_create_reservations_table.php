@@ -16,6 +16,7 @@ return new class extends Migration
       $table->string('name');
       $table->unsignedBigInteger('doctor_id');
       $table->unsignedBigInteger('patient_id');
+      $table->string('label');
       $table->dateTime('start_datetime');
       $table->dateTime('end_datetime');
       $table->text('description')->nullable();

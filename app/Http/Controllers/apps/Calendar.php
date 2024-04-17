@@ -4,13 +4,25 @@ namespace App\Http\Controllers\apps;
 
 use App\Http\Controllers\Controller;
 use App\Models\Reservation;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Role;
 
 class Calendar extends Controller
 {
   public function index()
   {
-    return view('content.apps.app-calendar');
+    // Get the "patient" role
+    $patientRole = Role::findByName('patient');
+    $doctorRole = Role::findByName('doctor');
+    // Retrieve users with the "patient" role
+    $patients = User::whereHas('roles', function ($query) use ($patientRole) {
+      $query->where('role_id', $patientRole->id);
+    })->get();
+    $doctors = User::whereHas('roles', function ($query) use ($doctorRole) {
+      $query->where('role_id', $doctorRole->id);
+    })->get();
+    return view('content.apps.app-calendar', compact('patients', 'doctors'));
   }
   public function getEvents(Request $request)
   {

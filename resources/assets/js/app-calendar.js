@@ -38,10 +38,11 @@ document.addEventListener('DOMContentLoaded', function () {
       eventTitle = document.querySelector('#eventTitle'),
       eventStartDate = document.querySelector('#eventStartDate'),
       eventEndDate = document.querySelector('#eventEndDate'),
-      eventUrl = document.querySelector('#eventURL'),
+      // eventUrl = document.querySelector('#eventURL'),
       eventLabel = $('#eventLabel'), // ! Using jquery vars due to select2 jQuery dependency
-      eventGuests = $('#eventGuests'), // ! Using jquery vars due to select2 jQuery dependency
-      eventLocation = document.querySelector('#eventLocation'),
+      eventdoctors = $('#eventDoctors'), // ! Using jquery vars due to select2 jQuery dependency
+      eventpatients = $('#eventPatients'), // ! Using jquery vars due to select2 jQuery dependency
+      // eventLocation = document.querySelector('#eventLocation'),
       eventDescription = document.querySelector('#eventDescription'),
       allDaySwitch = document.querySelector('.allDay-switch'),
       selectAll = document.querySelector('.select-all'),
@@ -80,32 +81,62 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
-    // Event Guests (select2)
-    if (eventGuests.length) {
-      function renderGuestAvatar(option) {
-        if (!option.id) {
-          return option.text;
-        }
-        var $avatar =
-          "<div class='d-flex flex-wrap align-items-center'>" +
-          "<div class='avatar avatar-xs me-2'>" +
-          "<img src='" +
-          assetsPath +
-          'img/avatars/' +
-          $(option.element).data('avatar') +
-          "' alt='avatar' class='rounded-circle' />" +
-          '</div>' +
-          option.text +
-          '</div>';
+    // Event doctors (select2)
+    if (eventdoctors.length) {
+      // function renderGuestAvatar(option) {
+      //   if (!option.id) {
+      //     return option.text;
+      //   }
+      //   var $avatar =
+      //     "<div class='d-flex flex-wrap align-items-center'>" +
+      //     "<div class='avatar avatar-xs me-2'>" +
+      //     "<img src='" +
+      //     assetsPath +
+      //     'img/avatars/' +
+      //     $(option.element).data('avatar') +
+      //     "' alt='avatar' class='rounded-circle' />" +
+      //     '</div>' +
+      //     option.text +
+      //     '</div>';
 
-        return $avatar;
-      }
-      eventGuests.wrap('<div class="position-relative"></div>').select2({
+      //   return $avatar;
+      // }
+      eventdoctors.wrap('<div class="position-relative"></div>').select2({
         placeholder: 'Select value',
-        dropdownParent: eventGuests.parent(),
+        dropdownParent: eventdoctors.parent(),
         closeOnSelect: false,
-        templateResult: renderGuestAvatar,
-        templateSelection: renderGuestAvatar,
+        // templateResult: renderGuestAvatar,
+        // templateSelection: renderGuestAvatar,
+        escapeMarkup: function (es) {
+          return es;
+        }
+      });
+    }
+    if (eventpatients.length) {
+      // function renderGuestAvatar(option) {
+      //   if (!option.id) {
+      //     return option.text;
+      //   }
+      //   var $avatar =
+      //     "<div class='d-flex flex-wrap align-items-center'>" +
+      //     "<div class='avatar avatar-xs me-2'>" +
+      //     "<img src='" +
+      //     assetsPath +
+      //     'img/avatars/' +
+      //     $(option.element).data('avatar') +
+      //     "' alt='avatar' class='rounded-circle' />" +
+      //     '</div>' +
+      //     option.text +
+      //     '</div>';
+
+      //   return $avatar;
+      // }
+      eventpatients.wrap('<div class="position-relative"></div>').select2({
+        placeholder: 'Select value',
+        dropdownParent: eventpatients.parent(),
+        closeOnSelect: false,
+        // templateResult: renderGuestAvatar,
+        // templateSelection: renderGuestAvatar,
         escapeMarkup: function (es) {
           return es;
         }
@@ -170,11 +201,11 @@ document.addEventListener('DOMContentLoaded', function () {
         ? end.setDate(eventToUpdate.end, true, 'Y-m-d')
         : end.setDate(eventToUpdate.start, true, 'Y-m-d');
       eventLabel.val(eventToUpdate.extendedProps.calendar).trigger('change');
-      eventToUpdate.extendedProps.location !== undefined
-        ? (eventLocation.value = eventToUpdate.extendedProps.location)
-        : null;
-      eventToUpdate.extendedProps.guests !== undefined
-        ? eventGuests.val(eventToUpdate.extendedProps.guests).trigger('change')
+      // eventToUpdate.extendedProps.location !== undefined
+      //   ? (eventLocation.value = eventToUpdate.extendedProps.location)
+      //   : null;
+      eventToUpdate.extendedProps.doctors !== undefined
+        ? eventdoctors.val(eventToUpdate.extendedProps.doctors).trigger('change')
         : null;
       eventToUpdate.extendedProps.description !== undefined
         ? (eventDescription.value = eventToUpdate.extendedProps.description)
@@ -387,7 +418,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       // ? To update event directly to calender (won't update currentEvents object)
       // let propsToUpdate = ['id', 'title', 'url'];
-      // let extendedPropsToUpdate = ['calendar', 'guests', 'location', 'description'];
+      // let extendedPropsToUpdate = ['calendar', 'doctors', 'location', 'description'];
 
       // updateEventInCalendar(eventData, propsToUpdate, extendedPropsToUpdate);
     }
@@ -456,15 +487,15 @@ document.addEventListener('DOMContentLoaded', function () {
             endStr: eventEndDate.value,
             display: 'block',
             extendedProps: {
-              location: eventLocation.value,
-              guests: eventGuests.val(),
+              // location: eventLocation.value,
+              doctors: eventdoctors.val(),
               calendar: eventLabel.val(),
               description: eventDescription.value
             }
           };
-          if (eventUrl.value) {
-            newEvent.url = eventUrl.value;
-          }
+          // if (eventUrl.value) {
+          //   newEvent.url = eventUrl.value;
+          // }
           if (allDaySwitch.checked) {
             newEvent.allDay = true;
           }
@@ -480,10 +511,10 @@ document.addEventListener('DOMContentLoaded', function () {
             title: eventTitle.value,
             start: eventStartDate.value,
             end: eventEndDate.value,
-            url: eventUrl.value,
+            // url: eventUrl.value,
             extendedProps: {
-              location: eventLocation.value,
-              guests: eventGuests.val(),
+              // location: eventLocation.value,
+              doctors: eventdoctors.val(),
               calendar: eventLabel.val(),
               description: eventDescription.value
             },
@@ -508,12 +539,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // ------------------------------------------------
     function resetValues() {
       eventEndDate.value = '';
-      eventUrl.value = '';
+      // eventUrl.value = '';
       eventStartDate.value = '';
       eventTitle.value = '';
-      eventLocation.value = '';
+      // eventLocation.value = '';
       allDaySwitch.checked = false;
-      eventGuests.val('').trigger('change');
+      eventdoctors.val('').trigger('change');
       eventDescription.value = '';
     }
 

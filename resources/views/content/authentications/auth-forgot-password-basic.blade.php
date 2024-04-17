@@ -46,8 +46,14 @@
                                 {{ session('success') }}
                             </div>
                         @endif
+                        @if (session('error'))
+                            <div class="alert alert-danger">
+                                {{ session('error') }}
+                            </div>
+                        @endif
+
                         <form id="formAuthentication" class="mb-3"
-                            action="{{ route('auth-reset-password-basic.update') }}" method="POST">
+                            action="{{ route('auth-forgot-password-basic.update') }}" method="POST">
                             @csrf
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email</label>

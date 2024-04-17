@@ -10,6 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
 use Illuminate\Contracts\Auth\CanResetPassword;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable implements CanResetPassword
 {
@@ -84,5 +85,16 @@ class User extends Authenticatable implements CanResetPassword
   public function departments()
   {
     return $this->hasMany(User::class, 'department_id');
+  }
+  // Define the many-to-many relationship with itself for doctors
+  public function doctors(): BelongsToMany
+  {
+    return $this->belongsToMany(User::class, 'patient_doctor', 'patient_id', 'doctor_id');
+  }
+
+  // Define the many-to-many relationship with itself for patients
+  public function patients(): BelongsToMany
+  {
+    return $this->belongsToMany(User::class, 'patient_doctor', 'doctor_id', 'patient_id');
   }
 }
