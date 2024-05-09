@@ -205,8 +205,14 @@ Route::middleware(['auth'])->group(function () {
   // apps
   Route::get('/app/email', [Email::class, 'index'])->name('app-email');
   Route::get('/app/chat', [Chat::class, 'index'])->name('app-chat');
+  //calendar
   Route::get('/app/calendar', [Calendar::class, 'index'])->name('app-calendar');
   Route::get('/calendar/events', [Calendar::class, 'getEvents'])->name('app-calendar-events');
+  Route::post('/calendar/add-event', [Calendar::class, 'addEvent'])->name('app-calendar.add-event');
+  Route::post('/calendar/update-event/{id}', [Calendar::class, 'updateEvent'])->name('app-calendar.update-event');
+  Route::delete('/calendar/{id}', [Calendar::class, 'destroy'])->name('app-calendar.delete');
+
+  //end calendar
   Route::get('/app/kanban', [Kanban::class, 'index'])->name('app-kanban');
   Route::get('/app/ecommerce/dashboard', [EcommerceDashboard::class, 'index'])->name('app-ecommerce-dashboard');
   Route::get('/app/ecommerce/product/list', [EcommerceProductList::class, 'index'])->name('app-ecommerce-product-list');

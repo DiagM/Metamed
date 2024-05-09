@@ -3,7 +3,7 @@
 @section('title', 'Fullcalendar - Apps')
 
 @section('vendor-style')
-    @vite(['resources/assets/vendor/libs/fullcalendar/fullcalendar.scss', 'resources/assets/vendor/libs/flatpickr/flatpickr.scss', 'resources/assets/vendor/libs/select2/select2.scss', 'resources/assets/vendor/libs/quill/editor.scss', 'resources/assets/vendor/libs/@form-validation/form-validation.scss'])
+    @vite(['resources/assets/vendor/libs/fullcalendar/fullcalendar.scss', 'resources/assets/vendor/libs/flatpickr/flatpickr.scss', 'resources/assets/vendor/libs/select2/select2.scss', 'resources/assets/vendor/libs/quill/editor.scss', 'resources/assets/vendor/libs/@form-validation/form-validation.scss', 'resources/assets/vendor/libs/sweetalert2/sweetalert2.scss'])
 @endsection
 
 @section('page-style')
@@ -11,7 +11,7 @@
 @endsection
 
 @section('vendor-script')
-    @vite(['resources/assets/vendor/libs/fullcalendar/fullcalendar.js', 'resources/assets/vendor/libs/@form-validation/popular.js', 'resources/assets/vendor/libs/@form-validation/bootstrap5.js', 'resources/assets/vendor/libs/@form-validation/auto-focus.js', 'resources/assets/vendor/libs/select2/select2.js', 'resources/assets/vendor/libs/flatpickr/flatpickr.js', 'resources/assets/vendor/libs/moment/moment.js'])
+    @vite(['resources/assets/vendor/libs/fullcalendar/fullcalendar.js', 'resources/assets/vendor/libs/@form-validation/popular.js', 'resources/assets/vendor/libs/@form-validation/bootstrap5.js', 'resources/assets/vendor/libs/@form-validation/auto-focus.js', 'resources/assets/vendor/libs/select2/select2.js', 'resources/assets/vendor/libs/flatpickr/flatpickr.js', 'resources/assets/vendor/libs/moment/moment.js', 'resources/assets/vendor/libs/sweetalert2/sweetalert2.js'])
 @endsection
 
 @section('page-script')
@@ -42,6 +42,17 @@
                     <div class="mb-3 ms-3">
                         <small class="text-small text-muted text-uppercase align-middle">Filter</small>
                     </div>
+                    <div class="mb-3 select2-primary">
+                        <label class="form-label" for="filterPatients">Select Patients</label>
+                        <select class="select2 select-filter-patients form-select" id="filterPatients"
+                            name="filterPatients[]" multiple>
+                            @foreach ($patients as $patient)
+                                <option value="{{ $patient->id }}">{{ $patient->name }}</option>
+                            @endforeach
+                        </select>
+
+                    </div>
+
 
                     <div class="form-check mb-2 ms-3">
                         <input class="form-check-input select-all" type="checkbox" id="selectAll" data-value="all" checked>
@@ -50,29 +61,29 @@
 
                     <div class="app-calendar-events-filter ms-3">
                         <div class="form-check form-check-danger mb-2">
-                            <input class="form-check-input input-filter" type="checkbox" id="select-personal"
-                                data-value="personal" checked>
-                            <label class="form-check-label" for="select-personal">Personal</label>
+                            <input class="form-check-input input-filter" type="checkbox" id="select-Examination"
+                                data-value="Examination" checked>
+                            <label class="form-check-label" for="select-Examination">Examination</label>
                         </div>
                         <div class="form-check mb-2">
-                            <input class="form-check-input input-filter" type="checkbox" id="select-business"
-                                data-value="business" checked>
-                            <label class="form-check-label" for="select-business">Business</label>
+                            <input class="form-check-input input-filter" type="checkbox" id="select-Consultation"
+                                data-value="Consultation" checked>
+                            <label class="form-check-label" for="select-Consultation">Consultation</label>
                         </div>
                         <div class="form-check form-check-warning mb-2">
-                            <input class="form-check-input input-filter" type="checkbox" id="select-family"
-                                data-value="family" checked>
-                            <label class="form-check-label" for="select-family">Family</label>
+                            <input class="form-check-input input-filter" type="checkbox" id="select-Follow-up"
+                                data-value="Follow-up" checked>
+                            <label class="form-check-label" for="select-Follow-up">Follow-up</label>
                         </div>
                         <div class="form-check form-check-success mb-2">
-                            <input class="form-check-input input-filter" type="checkbox" id="select-holiday"
-                                data-value="holiday" checked>
-                            <label class="form-check-label" for="select-holiday">Holiday</label>
+                            <input class="form-check-input input-filter" type="checkbox" id="select-Procedure"
+                                data-value="Procedure" checked>
+                            <label class="form-check-label" for="select-Procedure">Procedure</label>
                         </div>
                         <div class="form-check form-check-info">
-                            <input class="form-check-input input-filter" type="checkbox" id="select-etc" data-value="etc"
-                                checked>
-                            <label class="form-check-label" for="select-etc">ETC</label>
+                            <input class="form-check-input input-filter" type="checkbox" id="select-Other"
+                                data-value="Other" checked>
+                            <label class="form-check-label" for="select-Other">Other</label>
                         </div>
                     </div>
                 </div>
@@ -102,6 +113,7 @@
                                 <label class="form-label" for="eventTitle">Title</label>
                                 <input type="text" class="form-control" id="eventTitle" name="eventTitle"
                                     placeholder="Event Title" />
+                                <span class="error-message alert-danger" id="eventTitle-error"></span>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label" for="eventLabel">Label</label>
@@ -112,19 +124,25 @@
                                     <option value="Procedure">Procedure</option>
                                     <option value="Other">Other</option>
                                 </select>
+                                <span class="error-message alert-danger" id="eventLabel-error"></span>
+
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label" for="eventStartDate">Start Date</label>
                                 <input type="text" class="form-control" id="eventStartDate" name="eventStartDate"
                                     placeholder="Start Date" />
+                                <span class="error-message alert-danger" id="eventStartDate-error"></span>
+
                             </div>
                             <div class="mb-3">
                                 <label class="form-label" for="eventEndDate">End Date</label>
                                 <input type="text" class="form-control" id="eventEndDate" name="eventEndDate"
                                     placeholder="End Date" />
+                                <span class="error-message alert-danger" id="eventEndDate-error"></span>
+
                             </div>
-                            <div class="mb-3">
+                            {{-- <div class="mb-3">
                                 <label class="switch">
                                     <input type="checkbox" class="switch-input allDay-switch" />
                                     <span class="switch-toggle-slider">
@@ -133,7 +151,7 @@
                                     </span>
                                     <span class="switch-label">All Day</span>
                                 </label>
-                            </div>
+                            </div> --}}
                             {{-- <div class="mb-3">
                                 <label class="form-label" for="eventURL">Event URL</label>
                                 <input type="url" class="form-control" id="eventURL" name="eventURL"
@@ -145,11 +163,13 @@
                                 <select class="select2 select-event-doctors form-select" id="eventDoctors"
                                     name="eventDoctors">
                                     @foreach ($doctors as $doctor)
-                                        <option value="{{ $doctor->name }}">{{ $doctor->name }}
+                                        <option value="{{ $doctor->id }}">{{ $doctor->name }}
                                         </option>
                                     @endforeach
 
                                 </select>
+                                <span class="error-message alert-danger" id="eventDoctors-error"></span>
+
                             </div>
 
                             <div class="mb-3 select2-primary">
@@ -161,6 +181,8 @@
                                     @endforeach
 
                                 </select>
+                                <span class="error-message alert-danger" id="eventPatients-error"></span>
+
                             </div>
                             {{-- <div class="mb-3">
                                 <label class="form-label" for="eventLocation">Location</label>
@@ -170,6 +192,8 @@
                             <div class="mb-3">
                                 <label class="form-label" for="eventDescription">Description</label>
                                 <textarea class="form-control" name="eventDescription" id="eventDescription"></textarea>
+                                <span class="error-message alert-danger" id="eventDescription-error"></span>
+
                             </div>
                             <div class="mb-3 d-flex justify-content-sm-between justify-content-start my-4">
                                 <div>

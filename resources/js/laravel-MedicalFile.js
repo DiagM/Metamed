@@ -539,7 +539,7 @@ formData.append('medical_file', $('#add-medical-file')[0].files[0]); // Append t
         offCanvasForm.offcanvas('hide');
         Swal.fire({
           title: 'Duplicate Entry!',
-          text: 'Your email should be unique.',
+          text: err,
           icon: 'error',
           customClass: {
             confirmButton: 'btn btn-success'
