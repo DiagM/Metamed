@@ -93,19 +93,102 @@ document.addEventListener('DOMContentLoaded', function () {
         Helpers._addClass('flex-shrink-0 avatar ' + userStatusObj[value] + ' me-3', chatContactsUserAvatar);
       });
     });
+    // Fetch initial chat list
+    fetchChatList();
 
-    // Select chat or contact
-    chatContactListItems.forEach(chatContactListItem => {
-      // Bind click event to each chat contact list item
-      chatContactListItem.addEventListener('click', e => {
-        // Remove active class from chat contact list item
-        chatContactListItems.forEach(chatContactListItem => {
-          chatContactListItem.classList.remove('active');
-        });
-        // Add active class to current chat contact list item
-        e.currentTarget.classList.add('active');
+    // Fetch and display chat list
+function fetchChatList() {
+  fetch('/api/messenger/threads')
+      .then(response => response.json())
+      .then(responseData => {
+          let data = responseData.data; // Assuming data is an array
+
+          let chatList = document.getElementById('chat-list');
+          // chatList.innerHTML = ''; // Clear existing chats
+
+          if (Array.isArray(data) && data.length > 0) {
+              data.forEach(chat => {
+
+                  let chatItem = document.createElement('li');
+                  let avatarImg;
+
+                    if (chat.resources.recipient.base.picture === null ) {
+                                               // Generate initials and random background color
+                        var stateNum = Math.floor(Math.random() * 6);
+                        var states = ['success', 'danger', 'warning', 'info', 'dark', 'primary', 'secondary'];
+                        var $state = states[stateNum];
+                        var $name = chat.name; // Use chat name for initials
+                        var $initials = $name.match(/\b\w/g) || [];
+                        $initials = (($initials.shift() || '') + ($initials.pop() || '')).toUpperCase();
+                        var $output = '<span class="avatar-initial rounded-circle bg-label-' + $state + '">' + $initials + '</span>';
+                        avatarImg = $output;
+                    } else {
+                        avatarImg = `<img src="${chat.avatar.sm}" alt="Avatar" class="rounded-circle">`;
+                    }
+                  chatItem.classList.add('chat-contact-list-item');
+                  chatItem.innerHTML = `
+                      <a class="d-flex align-items-center">
+                          <div class="flex-shrink-0 avatar ">
+                          ${avatarImg}
+                          </div>
+                          <div class="chat-contact-info flex-grow-1 ms-2">
+                              <h6 class="chat-contact-name text-truncate m-0">${chat.name}</h6>
+                              <p class="chat-contact-status text-muted text-truncate mb-0">${chat.resources.latest_message.body}</p>
+                          </div>
+                          <small class="text-muted mb-auto">${getTimePassed(chat.resources.latest_message.updated_at)}</small>
+                      </a>
+                  `;
+                  chatList.appendChild(chatItem);
+              });
+              // Add event listeners to the new chat items
+                addChatItemEventListeners();
+          } else {
+              // No chats found, display a message
+              chatList.innerHTML = `
+                  <li class="chat-contact-list-item chat-list-item-0">
+                      <h6 class="text-muted mb-0">No Chats Found</h6>
+                  </li>
+              `;
+          }
+      })
+      .catch(error => {
+          console.error('Error fetching chat list:', error);
       });
-    });
+}
+// Helper function to get time passed since the given timestamp
+function getTimePassed(timestamp) {
+  const now = new Date();
+  const updatedAt = new Date(timestamp);
+  const diffInMs = now - updatedAt;
+
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+  if (diffInMinutes < 1) {
+      return 'Just now';
+  } else if (diffInMinutes < 60) {
+      return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
+  } else if (diffInHours < 24) {
+      return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+  } else {
+      return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+  }
+}
+
+// Add event listeners to chat items
+function addChatItemEventListeners() {
+  const chatContactListItems = document.querySelectorAll('.chat-contact-list-item:not(.chat-contact-list-item-title)');
+  chatContactListItems.forEach(chatContactListItem => {
+      chatContactListItem.addEventListener('click', e => {
+          chatContactListItems.forEach(item => {
+              item.classList.remove('active');
+          });
+          e.currentTarget.classList.add('active');
+      });
+  });
+}
+
 
     // Filter Chats
     if (searchInput) {
@@ -157,18 +240,61 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Send Message
     formSendMessage.addEventListener('submit', e => {
-      e.preventDefault();
-      if (messageInput.value) {
-        // Create a div and add a class
-        let renderMsg = document.createElement('div');
-        renderMsg.className = 'chat-message-text mt-2';
-        renderMsg.innerHTML = '<p class="mb-0 text-break">' + messageInput.value + '</p>';
-        document.querySelector('li:last-child .chat-message-wrapper').appendChild(renderMsg);
-        messageInput.value = '';
-        scrollToBottom();
-      }
+       e.preventDefault();
+      // if (messageInput.value) {
+      //   // Create a div and add a class
+      //   let renderMsg = document.createElement('div');
+      //   renderMsg.className = 'chat-message-text mt-2';
+      //   renderMsg.innerHTML = '<p class="mb-0 text-break">' + messageInput.value + '</p>';
+      //   document.querySelector('li:last-child .chat-message-wrapper').appendChild(renderMsg);
+      //   messageInput.value = '';
+      //   scrollToBottom();
+      // }
+      // Send knock
+    sendKnock('9c1b9a73-8a17-4a50-8baa-3f46a7349ce7'); // Replace threadId with your actual thread ID
     });
+    // Knock Action
+    function sendKnock(threadId) {
+      $.ajax({
+        url: `/api/messenger/threads/9c1b9a73-8a17-4a50-8baa-3f46a7349ce7/knock-knock`,
+        type: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        data: JSON.stringify({
+          thread_id: threadId,
+        }),
+        success: function(data) {
+          console.log('Knock sent successfully', data);
 
+        },
+        error: function(xhr, status, error) {
+          console.error('Error sending knock:', error);
+        }
+      });
+    }
+    // window.Echo.channel(`thread.9c1b9a73-91f3-46fe-a137-105af1d63d0a`)
+    // .listen('.knock.knock', (event) => {
+    //     console.log('Knock event received:', event);
+    //     // Handle the event as needed
+    // });
+// Access userData passed from Blade template
+      let userId = window.userData.id;
+  Echo.private(`messenger.user.${userId}`)
+    .listen('.new.message', (e) => console.log(e))
+    .listen('.thread.archived', (e) => console.log(e))
+    .listen('.message.archived', (e) => console.log(e))
+    .listen('.knock.knock', (e) =>  {
+      console.log(e);
+      // Play sound notification
+      playNotificationSound();
+  });
+// Function to play notification sound
+function playNotificationSound() {
+  let audio = new Audio(`${baseUrl}assets/audio/knok.mp3`);
+  audio.play();
+}
     // on click of chatHistoryHeaderMenu, Remove data-overlay attribute from chatSidebarLeftClose to resolve overlay overlapping issue for two sidebar
     let chatHistoryHeaderMenu = document.querySelector(".chat-history-header [data-target='#app-chat-contacts']"),
       chatSidebarLeftClose = document.querySelector('.app-chat-sidebar-left .close-sidebar');
@@ -205,4 +331,5 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     }
   })();
+
 });

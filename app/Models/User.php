@@ -8,13 +8,15 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
-
 use Illuminate\Contracts\Auth\CanResetPassword;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use RTippin\Messenger\Contracts\MessengerProvider;
+use RTippin\Messenger\Traits\Messageable;
+use Illuminate\Database\Eloquent\Builder;
 
-class User extends Authenticatable implements CanResetPassword
+class User extends Authenticatable implements CanResetPassword, MessengerProvider
 {
-  use HasApiTokens, HasFactory, Notifiable,  HasRoles;
+  use HasApiTokens, HasFactory, Notifiable,  HasRoles, Messageable;
 
   /**
    * The attributes that are mass assignable.
@@ -55,6 +57,32 @@ class User extends Authenticatable implements CanResetPassword
     'email_verified_at' => 'datetime',
     'password' => 'hashed',
   ];
+
+  public static function getProviderSettings(): array
+  {
+    return [
+      'alias' => 'user',
+      'searchable' => true,
+      'friendable' => true,
+      'devices' => true,
+      'default_avatar' => public_path('vendor/messenger/images/users.png'),
+      'cant_message_first' => [],
+      'cant_search' => [],
+      'cant_friend' => [],
+    ];
+  }
+  public static function getProviderSearchableBuilder(
+    Builder $query,
+    string $search,
+    array $searchItems
+  ) {
+    $query->where(function (Builder $query) use ($searchItems) {
+      foreach ($searchItems as $item) {
+        $query->orWhere('name', 'LIKE', "%{$item}%")
+          ->orWhere('license_number', 'LIKE', "%{$item}%");
+      }
+    })->orWhere('email', '=', $search);
+  }
 
   public function medicalFiles()
   {

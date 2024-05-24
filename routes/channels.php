@@ -1,6 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Broadcast;
+use RTippin\Messenger\Broadcasting\Channels\CallChannel;
+use RTippin\Messenger\Broadcasting\Channels\ProviderChannel;
+use RTippin\Messenger\Broadcasting\Channels\ThreadChannel;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,5 +17,5 @@ use Illuminate\Support\Facades\Broadcast;
 */
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
-    return (int) $user->id === (int) $id;
+  return (int) $user->id === (int) $id;
 });

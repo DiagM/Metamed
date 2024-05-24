@@ -204,6 +204,7 @@ Route::middleware(['auth'])->group(function () {
 
   // apps
   Route::get('/app/email', [Email::class, 'index'])->name('app-email');
+  //chat
   Route::get('/app/chat', [Chat::class, 'index'])->name('app-chat');
   //calendar
   Route::get('/app/calendar', [Calendar::class, 'index'])->name('app-calendar');

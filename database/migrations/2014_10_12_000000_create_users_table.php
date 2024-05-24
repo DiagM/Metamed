@@ -23,6 +23,7 @@ return new class extends Migration
       $table->foreign('department_id')->references('id')->on('users')->onDelete('cascade');
       $table->string('license_number')->nullable();
       $table->string('contact')->nullable();
+      $table->string('picture')->nullable();
       $table->date('date_of_birth')->nullable();
       $table->string('gender')->nullable();
       $table->text('address')->nullable();
