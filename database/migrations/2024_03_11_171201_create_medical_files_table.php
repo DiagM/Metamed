@@ -15,6 +15,8 @@ return new class extends Migration
       $table->id();
       $table->unsignedBigInteger('patient_id');
       $table->foreign('patient_id')->references('id')->on('users')->onDelete('cascade');
+      $table->unsignedBigInteger('doctor_id');
+      $table->foreign('doctor_id')->references('id')->on('users')->onDelete('cascade');
       $table->string('file_name'); // Name of the medical file
       $table->text('description')->nullable(); // Description of the medical file
       $table->string('file_path')->nullable(); // Path to the medical file

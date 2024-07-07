@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use RTippin\Messenger\Facades\Messenger;
 use Spatie\Permission\Models\Role;
 
 class UserManagement extends Controller
@@ -182,6 +183,7 @@ class UserManagement extends Controller
           ['email' => $user->email],
           ['token' => $token, 'created_at' => now()]
         );
+        Messenger::getProviderMessenger($user);
 
         // $user->notify(new doctorPasswordReset($token));
         SendEmailJob::dispatch($token, $user->email);
@@ -240,5 +242,16 @@ class UserManagement extends Controller
   public function destroy($id)
   {
     $users = User::where('id', $id)->delete();
+  }
+
+  public function indexmobile()
+  {
+    return User::all();
+  }
+  public function userroles(Request $request)
+  {
+    return response()->json([
+      'roles' => $request->user()->getRoleNames(),
+    ]);
   }
 }

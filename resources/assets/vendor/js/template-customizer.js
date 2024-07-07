@@ -619,45 +619,45 @@ class TemplateCustomizer {
     }
 
     // Theme
-    const themesW = this.container.querySelector('.template-customizer-themes')
-    const themesWInner = themesW.querySelector('.template-customizer-themes-options')
+    // const themesW = this.container.querySelector('.template-customizer-themes')
+    // const themesWInner = themesW.querySelector('.template-customizer-themes-options')
 
-    if (!this._hasControls('themes')) {
-      themesW.parentNode.removeChild(themesW)
-    } else {
-      this.settings.availableThemes.forEach(theme => {
-        let image = ''
-        if (theme.name === 'theme-semi-dark') {
-          image = `semi-dark`
-        } else if (theme.name === 'theme-bordered') {
-          image = `border`
-        } else {
-          image = `default`
-        }
-        const themeEl = createOptionElement(theme.name, theme.title, 'themeRadios', cl.contains('dark-style'), image)
-        themesWInner.appendChild(themeEl)
-      })
+    // if (!this._hasControls('themes')) {
+    //   themesW.parentNode.removeChild(themesW)
+    // } else {
+    //   this.settings.availableThemes.forEach(theme => {
+    //     let image = ''
+    //     if (theme.name === 'theme-semi-dark') {
+    //       image = `semi-dark`
+    //     } else if (theme.name === 'theme-bordered') {
+    //       image = `border`
+    //     } else {
+    //       image = `default`
+    //     }
+    //     const themeEl = createOptionElement(theme.name, theme.title, 'themeRadios', cl.contains('dark-style'), image)
+    //     themesWInner.appendChild(themeEl)
+    //   })
 
-      themesWInner.querySelector(`input[value="${this.settings.theme.name}"]`).setAttribute('checked', 'checked')
+    //   themesWInner.querySelector(`input[value="${this.settings.theme.name}"]`).setAttribute('checked', 'checked')
 
-      const themeCb = e => {
-        this._loading = true
-        this._loadingState(true, true)
+    //   const themeCb = e => {
+    //     this._loading = true
+    //     this._loadingState(true, true)
 
-        this.setTheme(e.target.value, true, () => {
-          this._loading = false
-          this._loadingState(false, true)
-        })
-      }
+    //     this.setTheme(e.target.value, true, () => {
+    //       this._loading = false
+    //       this._loadingState(false, true)
+    //     })
+    //   }
 
-      themesWInner.addEventListener('change', themeCb)
-      this._listeners.push([themesWInner, 'change', themeCb])
-    }
-    const themingW = this.container.querySelector('.template-customizer-theming')
+    //   themesWInner.addEventListener('change', themeCb)
+    //   this._listeners.push([themesWInner, 'change', themeCb])
+    // }
+    // const themingW = this.container.querySelector('.template-customizer-theming')
 
-    if (!this._hasControls('style') && !this._hasControls('themes')) {
-      themingW.parentNode.removeChild(themingW)
-    }
+    // if (!this._hasControls('style') && !this._hasControls('themes')) {
+    //   themingW.parentNode.removeChild(themingW)
+    // }
 
     // Layout wrapper
     const layoutW = this.container.querySelector('.template-customizer-layout')
@@ -1292,7 +1292,7 @@ TemplateCustomizer.LANGUAGES = {
     panel_sub_header: 'Customize and preview in real time',
     theming_header: 'Theming',
     style_label: 'Style (Mode)',
-    theme_label: 'Themes',
+
     layout_header: 'Layout',
     layout_label: 'Menu (Navigation)',
     layout_header_label: 'Header Types',

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Brokers\JanusBroker;
 use App\Models\User;
 use Illuminate\Support\ServiceProvider;
 use RTippin\Messenger\Facades\Messenger;
@@ -40,5 +41,7 @@ class MessengerServiceProvider extends ServiceProvider
     MessengerBots::registerPackagedBots([
       //
     ]);
+
+    // Messenger::setVideoDriver(JanusBroker::class);
   }
 }

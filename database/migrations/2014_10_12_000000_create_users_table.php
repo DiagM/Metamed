@@ -29,10 +29,16 @@ return new class extends Migration
       $table->text('address')->nullable();
       $table->double('latitude', 10, 8)->nullable();
       $table->double('longitude', 10, 8)->nullable();
+      $table->string('height')->nullable();
+      $table->string('weight')->nullable();
+      $table->string('blood_type')->nullable();
+      $table->text('medical_notes')->nullable();
+      $table->text('allergies')->nullable();
       $table->rememberToken();
       $table->timestamps();
     });
   }
+
 
   /**
    * Reverse the migrations.

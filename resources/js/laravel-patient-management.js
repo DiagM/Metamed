@@ -34,6 +34,13 @@ $(function () {
       serverSide: true,
       ajax: {
         url: baseUrl + 'patient-list',
+            data: function (d) {
+                d.blood_type = $('#filter-blood-type').val(); // Include blood_type filter
+                d.doctor_name = $('#filter-doctor-name').val(); // Include doctor_name filter
+                d.department_name = $('#filter-department-name').val(); // Include department_name filter
+                d.hospital_name = $('#filter-hospital-name').val(); // Include hospital_name filter
+
+            }
 
       },
       columns: [
@@ -44,6 +51,7 @@ $(function () {
         { data: 'email' },
         { data: 'license_number' },
         { data: 'contact' },
+        { data: 'blood_type' },
         { data: 'action' }
       ],
       columnDefs: [
@@ -129,7 +137,14 @@ $(function () {
 
             return '<span class="contact">' + $contact + '</span>';
           }
-        },
+        },{
+                  // Blood Type
+                  targets: 6,
+                  render: function (data, type, full, meta) {
+                    var $blood_type = full['blood_type'];
+                    return '<span class="blood_type">' + $blood_type + '</span>';
+                  }
+                },
         {
           // Actions
           targets: -1,
@@ -348,11 +363,25 @@ $(function () {
         }
       }
     });
+        // Event listener for blood type filter change
+        $('#filter-blood-type').change(function () {
+          dt_user.draw();
+      });
+
+      // Event listener for doctor name filter change
+      $('#filter-doctor-name').change(function () {
+        dt_user.draw();
+    });
   }
 // Handle department filter change
-$('#filter-department').change(function () {
+$('#filter-department-name').change(function () {
   dt_user.draw(); // Redraw datatable on department filter change
 });
+
+$('#filter-hospital-name').change(function () {
+  dt_user.draw(); // Redraw datatable on department filter change
+});
+
   // Delete Record
   $(document).on('click', '.delete-record', function () {
     var user_id = $(this).data('id'),
@@ -418,7 +447,7 @@ $('#filter-department').change(function () {
 
     // Make an AJAX request to the show route
     $.ajax({
-        url: '/patient-list/' + patientId, // Adjust the URL according to your route setup
+        url: '/patient-list/' + patientId, // Adjust the URL according to the route setup
         method: 'GET',
         success: function(response) {
             // Handle the successful response, for example, redirecting to the show page
@@ -431,32 +460,37 @@ $('#filter-department').change(function () {
     });
 });
 
-  // edit record
-  $(document).on('click', '.edit-record', function () {
-    var user_id = $(this).data('id'),
-      dtrModal = $('.dtr-bs-modal.show');
+// Edit record
+$(document).on('click', '.edit-record', function() {
+  var user_id = $(this).data('id');
 
-    // hide responsive modal in small screen
-    if (dtrModal.length) {
-      dtrModal.modal('hide');
-    }
+  // Close any visible offcanvas modal
+  var dtrModal = $('.dtr-bs-modal.show');
+  if (dtrModal.length) {
+    dtrModal.modal('hide');
+  }
 
-    // changing the title of offcanvas
-    $('#offcanvasAddUserLabel').html('Edit Patient');
+  // Change the title of offcanvas
+  $('#offcanvasAddUserLabel').html('Edit Patient');
 
-    // get data
-    $.get(`${baseUrl}patient-list\/${user_id}\/edit`, function (data) {
-
-      $('#user_id').val(data.id);
-      $('#add-user-fullname').val(data.name);
-      $('#add-user-email').val(data.email);
-      $('#add-user-contact').val(data.contact);
-      $('#add-user-license_number').val(data.license_number);
-      $('#add-user-date_of_birth').val(data.date_of_birth);
-      $('#add-user-gender').val(data.gender);
-      $('#add-user-address').val(data.address);
-    });
+  // Fetch data using AJAX
+  $.get(`${baseUrl}patient-list/${user_id}/edit`, function(data) {
+    $('#user_id').val(data.id);
+    $('#add-user-fullname').val(data.name);
+    $('#add-user-email').val(data.email);
+    $('#add-user-contact').val(data.contact);
+    $('#add-user-license_number').val(data.license_number);
+    $('#add-user-date_of_birth').val(data.date_of_birth);
+    $('#add-user-gender').val(data.gender);
+    $('#add-user-address').val(data.address);
+    $('#add-user-height').val(data.height);
+    $('#add-user-weight').val(data.weight);
+    $('#add-user-blood_type').val(data.blood_type);
+    $('#add-user-medical_notes').val(data.medical_notes);
+    $('#add-user-allergies').val(data.allergies);
   });
+});
+
 
   // changing the title
   $('.add-new').on('click', function () {
@@ -488,7 +522,7 @@ $('#filter-department').change(function () {
       email: {
         validators: {
           notEmpty: {
-            message: 'Please enter your email'
+            message: 'Please enter the email'
           },
           emailAddress: {
             message: 'The value is not a valid email address'
@@ -498,31 +532,79 @@ $('#filter-department').change(function () {
       userContact: {
         validators: {
           notEmpty: {
-            message: 'Please enter your contact'
+            message: 'Please enter the contact'
           }
         }
       },
       license_number: {
         validators: {
           notEmpty: {
-            message: 'Please enter your license_number'
+            message: 'Please enter the license_number'
           }
         }
       },
       date_of_birth: {
         validators: {
           notEmpty: {
-            message: 'Please enter your date_of_birth'
+            message: 'Please enter the date_of_birth'
           }
         }
       },
       address: {
         validators: {
           notEmpty: {
-            message: 'Please enter your address'
+            message: 'Please enter the address'
           }
         }
-      }
+      },
+      height: {
+        validators: {
+          notEmpty: {
+            message: 'Please enter the height'
+          },
+          numeric: {
+            message: 'The value must be a number'
+          }
+
+        }
+      },
+      weight: {
+        validators: {
+          notEmpty: {
+            message: 'Please enter the weight'
+          },
+          numeric: {
+            message: 'The value must be a number'
+          }
+        }
+      },
+      blood_type: {
+        validators: {
+          notEmpty: {
+            message: 'Please enter the blood type'
+          },
+          regexp: {
+            regexp: /^(A|B|AB|O)[+-]$/,
+            message: 'Please enter a valid blood type (e.g., O+, A-)'
+          }
+        }
+      },
+      medical_notes: {
+        validators: {
+          notEmpty: {
+            message: 'Please enter the medical notes'
+          }
+        }
+      },
+      allergies: {
+        validators: {
+          notEmpty: {
+            message: 'Please enter the allergies'
+          }
+        }
+      },
+
+
     },
     plugins: {
       trigger: new FormValidation.plugins.Trigger(),

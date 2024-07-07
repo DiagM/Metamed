@@ -9,6 +9,7 @@
   "license": "MIT",
   "require": {
     "php": "^8.2",
+    "barryvdh/laravel-dompdf": "^2.2",
     "guzzlehttp/guzzle": "^7.2",
     "laravel/framework": "^10.39",
     "laravel/horizon": "^5.23",
@@ -16,8 +17,11 @@
     "laravel/tinker": "^2.8",
     "predis/predis": "^2.2",
     "pusher/pusher-php-server": "^7.2",
+    "rtippin/janus-client": "^1.2",
     "rtippin/messenger": "^1.22",
-    "spatie/laravel-permission": "^6.4"
+    "rtippin/messenger-ui": "^2.7",
+    "spatie/laravel-permission": "^6.4",
+    "yieldstudio/laravel-expo-notifier": "^0.0.14"
   },
   "require-dev": {
     "fakerphp/faker": "^1.9.1",

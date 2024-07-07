@@ -164,7 +164,7 @@
       "slug": "app-email"
     },
     {
-      "url": "app/chat",
+      "url": "messenger",
       "name": "Chat",
       "icon": "menu-icon tf-icons ti ti-messages",
       "slug": "app-chat"

@@ -8,6 +8,10 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
+use App\Notifications\ReservationReminderNotification;
+use DateTime;
+use Illuminate\Support\Facades\Notification;
 
 class Calendar extends Controller
 {
@@ -109,6 +113,18 @@ class Calendar extends Controller
     $reservation->description = $request->eventDescription;
     $reservation->save();
 
+
+
+
+    $patient = $reservation->patient;
+
+    if ($patient && $patient->expoTokens()->exists()) {
+      $title = 'Reservation Created';
+      $body = 'Your reservation ' . $reservation->name . '  on ' . $reservation->start_datetime . ' is created.';
+      Notification::send($patient, new ReservationReminderNotification($title, $body));
+    }
+
+
     // Return a response indicating success
     return response()->json(['message' => 'added']);
   }
@@ -140,6 +156,9 @@ class Calendar extends Controller
     if (!$reservation) {
       return response()->json(['error' => 'Reservation not found'], 404);
     }
+    $olddate = new DateTime($reservation->start_datetime);
+
+
 
     // Update Reservation instance with new data
     $reservation->name = $request->eventTitle;
@@ -151,6 +170,18 @@ class Calendar extends Controller
     $reservation->description = $request->eventDescription;
     $reservation->save();
 
+    $newDate = new DateTime($request->eventStartDate);
+
+    if ($olddate != $newDate) {
+
+      $patient = $reservation->patient;
+
+      if ($patient && $patient->expoTokens()->exists()) {
+        $title = 'Reservation Updated';
+        $body = 'Your reservation ' . $reservation->name . '  has been rescheduled to ' . $reservation->start_datetime . '.';
+        Notification::send($patient, new ReservationReminderNotification($title, $body));
+      }
+    }
     // Return a response indicating success
     return response()->json(['message' => 'updated']);
   }
@@ -158,5 +189,10 @@ class Calendar extends Controller
   {
 
     Reservation::where('id', $id)->delete();
+  }
+  public function indexmobile()
+  {
+    $reservations = Reservation::with('doctor', 'patient')->get();
+    return response()->json($reservations);
   }
 }

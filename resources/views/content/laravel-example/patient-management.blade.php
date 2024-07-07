@@ -25,12 +25,12 @@
                 <div class="card-body">
                     <div class="d-flex align-items-start justify-content-between">
                         <div class="content-left">
-                            <span>Users</span>
+                            <span>Patients</span>
                             <div class="d-flex align-items-end mt-2">
-                                <h3 class="mb-0 me-2">{{ $totalUser }}</h3>
+                                <h3 class="mb-0 me-2">{{ $totalPatients }}</h3>
                                 <small class="text-success">(100%)</small>
                             </div>
-                            <small>Total Users</small>
+                            <small>Total Patients</small>
                         </div>
                         <span class="badge bg-label-primary rounded p-2">
                             <i class="ti ti-user ti-sm"></i>
@@ -44,15 +44,14 @@
                 <div class="card-body">
                     <div class="d-flex align-items-start justify-content-between">
                         <div class="content-left">
-                            <span>Verified Users</span>
+                            <span>Male</span>
                             <div class="d-flex align-items-end mt-2">
-                                <h3 class="mb-0 me-2">{{ $verified }}</h3>
-                                <small class="text-success">(+95%)</small>
+                                <h3 class="mb-0 me-2">{{ $MalePatients }}</h3>
                             </div>
-                            <small>Recent analytics </small>
+                            <small>Total male patient</small>
                         </div>
                         <span class="badge bg-label-success rounded p-2">
-                            <i class="ti ti-user-check ti-sm"></i>
+                            <i class="fas fa-male fa-2x"></i>
                         </span>
                     </div>
                 </div>
@@ -63,15 +62,15 @@
                 <div class="card-body">
                     <div class="d-flex align-items-start justify-content-between">
                         <div class="content-left">
-                            <span>Duplicate Users</span>
+                            <span>Female</span>
                             <div class="d-flex align-items-end mt-2">
-                                <h3 class="mb-0 me-2">{{ $userDuplicates }}</h3>
-                                <small class="text-success">(0%)</small>
+                                <h3 class="mb-0 me-2">{{ $FemalePatients }}</h3>
+                                <small class="text-success"></small>
                             </div>
-                            <small>Recent analytics</small>
+                            <small>Total female patient</small>
                         </div>
                         <span class="badge bg-label-danger rounded p-2">
-                            <i class="ti ti-users ti-sm"></i>
+                            <i class="fas fa-female fa-2x"></i>
                         </span>
                     </div>
                 </div>
@@ -82,15 +81,15 @@
                 <div class="card-body">
                     <div class="d-flex align-items-start justify-content-between">
                         <div class="content-left">
-                            <span>Verification Pending</span>
+                            <span>blood type</span>
                             <div class="d-flex align-items-end mt-2">
-                                <h3 class="mb-0 me-2">{{ $notVerified }}</h3>
-                                <small class="text-danger">(+6%)</small>
+                                <h3 class="mb-0 me-2">{{ $mostCommonBloodType }}</h3>
+                                <small class="text-danger">({{ $mostCommonBloodTypeCount }})</small>
                             </div>
-                            <small>Recent analytics</small>
+                            <small>Most Common</small>
                         </div>
                         <span class="badge bg-label-warning rounded p-2">
-                            <i class="ti ti-user-circle ti-sm"></i>
+                            <i class="fa-solid fa-droplet fa-2x"></i>
                         </span>
                     </div>
                 </div>
@@ -101,8 +100,57 @@
     <div class="card">
         <div class="card-header">
             <h5 class="card-title mb-0">Search Filter</h5>
-
+            <div class="row align-items-end">
+                <div class="col-md-6 mb-3" style="width: 200px">
+                    <label for="filter-blood-type" class="form-label">Filter by Blood Type:</label>
+                    <select id="filter-blood-type" class="form-select">
+                        <option value="">All Blood Types</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3" style="width: 200px">
+                    <label for="filter-doctor-name" class="form-label">Filter by Doctor Name:</label>
+                    <select id="filter-doctor-name" class="form-select">
+                        <option value="">All doctors</option>
+                        @unlessrole('doctor')
+                            @foreach ($filterdoctors as $doctor)
+                                <option value="{{ $doctor->name }}">{{ $doctor->name }}</option>
+                            @endforeach
+                        @endrole
+                    </select>
+                </div>
+                @hasrole('hospital')
+                    <div class="col-md-6 mb-3" style="width: 200px">
+                        <label for="filter-department-name" class="form-label">Filter by department Name:</label>
+                        <select id="filter-department-name" class="form-select">
+                            <option value="">All department</option>
+                            @foreach ($departments as $department)
+                                <option value="{{ $department->name }}">{{ $department->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endrole
+                @hasrole('SuperAdmin')
+                    <div class="col-md-6 mb-3" style="width: 200px">
+                        <label for="filter-hospital-name" class="form-label">Filter by hospital Name:</label>
+                        <select id="filter-hospital-name" class="form-select">
+                            <option value="">All hospitals</option>
+                            @foreach ($departments as $department)
+                                <option value="{{ $department->name }}">{{ $department->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endrole
+            </div>
         </div>
+
 
 
         <div class="card-datatable table-responsive">
@@ -115,6 +163,7 @@
                         <th>Email</th>
                         <th>Licence number</th>
                         <th>Contact</th>
+                        <th>Blood type</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -136,8 +185,8 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="add-user-email">Email</label>
-                        <input type="text" id="add-user-email" class="form-control" placeholder="john.doe@example.com"
-                            aria-label="john.doe@example.com" name="email" />
+                        <input type="text" id="add-user-email" class="form-control"
+                            placeholder="john.doe@example.com" aria-label="john.doe@example.com" name="email" />
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="add-user-contact">Contact</label>
@@ -159,19 +208,49 @@
                         <select id="add-user-gender" name="gender" class="form-control">
                             <option value="male">Male</option>
                             <option value="female">Female</option>
-
                         </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label" for="add-user-address">Address</label>
                         <textarea id="add-user-address" name="address" class="form-control" rows="3"></textarea>
                     </div>
-
+                    <div class="mb-3">
+                        <label class="form-label" for="add-user-height">Height</label>
+                        <input type="number" min="0" id="add-user-height" name="height" class="form-control"
+                            placeholder="e.g. 180 cm" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="add-user-weight">Weight</label>
+                        <input type="number" min="0" id="add-user-weight" name="weight" class="form-control"
+                            placeholder="e.g. 75 kg" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="add-user-blood_type">Blood Type</label>
+                        <select id="add-user-blood_type" name="blood_type" class="form-control">
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="add-user-medical_notes">Medical Notes</label>
+                        <textarea id="add-user-medical_notes" name="medical_notes" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="add-user-allergies">Allergies and reactions</label>
+                        <textarea id="add-user-allergies" name="allergies" class="form-control" rows="3"></textarea>
+                    </div>
                     <button type="submit" class="btn btn-primary me-sm-3 me-1 data-submit">Submit</button>
                     <button type="reset" class="btn btn-label-secondary" data-bs-dismiss="offcanvas">Cancel</button>
                 </form>
             </div>
         </div>
+
 
     </div>
 @endsection

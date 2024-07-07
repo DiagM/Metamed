@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Str;
-
+use RTippin\Messenger\Facades\Messenger;
 
 class HospitalManagement extends Controller
 {
@@ -159,6 +159,7 @@ class HospitalManagement extends Controller
           ['email' => $user->email],
           ['token' => $token, 'created_at' => now()]
         );
+        Messenger::getProviderMessenger($user);
 
         // $user->notify(new HospitalPasswordReset($token));
         SendEmailJob::dispatch($token, $user->email);

@@ -274,22 +274,8 @@ function addChatItemEventListeners() {
         }
       });
     }
-    // window.Echo.channel(`thread.9c1b9a73-91f3-46fe-a137-105af1d63d0a`)
-    // .listen('.knock.knock', (event) => {
-    //     console.log('Knock event received:', event);
-    //     // Handle the event as needed
-    // });
-// Access userData passed from Blade template
-      let userId = window.userData.id;
-  Echo.private(`messenger.user.${userId}`)
-    .listen('.new.message', (e) => console.log(e))
-    .listen('.thread.archived', (e) => console.log(e))
-    .listen('.message.archived', (e) => console.log(e))
-    .listen('.knock.knock', (e) =>  {
-      console.log(e);
-      // Play sound notification
-      playNotificationSound();
-  });
+
+
 // Function to play notification sound
 function playNotificationSound() {
   let audio = new Audio(`${baseUrl}assets/audio/knok.mp3`);
@@ -330,6 +316,18 @@ function playNotificationSound() {
         });
       }
     }
+    //ECHO LISTNER
+    // Access userData passed from Blade template
+    let userId = window.userData.id;
+    Echo.private(`messenger.user.${userId}`)
+      .listen('.new.message', (e) => console.log(e))
+      .listen('.thread.archived', (e) => console.log(e))
+      .listen('.message.archived', (e) => console.log(e))
+      .listen('.knock.knock', (e) =>  {
+        console.log(e);
+        // Play sound notification
+        playNotificationSound();
+    });
   })();
 
 });

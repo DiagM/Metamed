@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use RTippin\Messenger\Contracts\MessengerProvider;
 use RTippin\Messenger\Traits\Messageable;
 use Illuminate\Database\Eloquent\Builder;
+use YieldStudio\LaravelExpoNotifier\Models\ExpoToken;
+
 
 class User extends Authenticatable implements CanResetPassword, MessengerProvider
 {
@@ -35,7 +37,13 @@ class User extends Authenticatable implements CanResetPassword, MessengerProvide
     'address',
     'gender',
     'latitude',
-    'longitude'
+    'longitude',
+    'picture',
+    'height',
+    'weight',
+    'blood_type',
+    'allergies',
+    'medical_notes',
   ];
 
   /**
@@ -86,7 +94,7 @@ class User extends Authenticatable implements CanResetPassword, MessengerProvide
 
   public function medicalFiles()
   {
-    return $this->hasMany(MedicalFile::class);
+    return $this->hasMany(MedicalFile::class, 'patient_id');
   }
   public function doctorReservations()
   {
@@ -97,20 +105,25 @@ class User extends Authenticatable implements CanResetPassword, MessengerProvide
   {
     return $this->hasMany(Reservation::class, 'patient_id');
   }
+
+  //department belong to hospital
   public function hospital()
   {
-    return $this->belongsTo(User::class);
+    return $this->belongsTo(User::class, 'hospital_id');
   }
-  public function department()
-  {
-    return $this->belongsTo(User::class);
-  }
-  public function hospitals()
+
+  // Relationship: a hospital has many departments
+  public function departments()
   {
     return $this->hasMany(User::class, 'hospital_id');
   }
-
-  public function departments()
+  //doctor belong to department
+  public function department()
+  {
+    return $this->belongsTo(User::class, 'department_id');
+  }
+  // Relationship: a department has many doctors
+  public function doctorsdepartment()
   {
     return $this->hasMany(User::class, 'department_id');
   }
@@ -120,9 +133,15 @@ class User extends Authenticatable implements CanResetPassword, MessengerProvide
     return $this->belongsToMany(User::class, 'patient_doctor', 'patient_id', 'doctor_id');
   }
 
+
   // Define the many-to-many relationship with itself for patients
   public function patients(): BelongsToMany
   {
     return $this->belongsToMany(User::class, 'patient_doctor', 'doctor_id', 'patient_id');
+  }
+
+  public function expoTokens()
+  {
+    return $this->morphMany(ExpoToken::class, 'owner');
   }
 }

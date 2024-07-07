@@ -32,7 +32,10 @@
                         <!-- Logo -->
                         <div class="app-brand justify-content-center mb-4 mt-2">
                             <a href="{{ url('/') }}" class="app-brand-link gap-2">
-                                <span class="app-brand-logo demo">@include('_partials.macros', ['height' => 20, 'withbg' => 'fill: #fff;'])</span>
+                                <span class="app-brand-logo demo">
+                                    <img src="{{ asset('assets/img/favicon/metamedlogo.webp') }}" alt="Logo"
+                                        width="25" height="25" />
+                                </span>
                                 <span
                                     class="app-brand-text demo text-body fw-bold ms-1">{{ config('variables.templateName') }}</span>
                             </a>
@@ -78,14 +81,14 @@
                             </div>
                         </form>
 
-                        <p class="text-center">
+                        {{-- <p class="text-center">
                             <span>New on our platform?</span>
                             <a href="{{ url('auth/register-basic') }}">
                                 <span>Create an account</span>
                             </a>
-                        </p>
+                        </p> --}}
 
-                        <div class="divider my-4">
+                        {{-- <div class="divider my-4">
                             <div class="divider-text">or</div>
                         </div>
 
@@ -101,7 +104,7 @@
                             <a href="javascript:;" class="btn btn-icon btn-label-twitter">
                                 <i class="tf-icons fa-brands fa-twitter fs-5"></i>
                             </a>
-                        </div>
+                        </div> --}}
                     </div>
                 </div>
                 <!-- /Register -->

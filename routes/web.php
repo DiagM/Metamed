@@ -385,6 +385,8 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/laravel/patient-management', [PatientManagement::class, 'patientManagement'])->name('laravel-example-patient-management');
   Route::resource('/patient-list', PatientManagement::class);
   Route::resource('/MedicalFile-list', MedicalFileManagement::class);
+  Route::post('/MedicalFile/prescription', [MedicalFileManagement::class, 'prescription']);
+
   Route::get('/download', function (Request $request) {
 
     $filePath = $request->input('url');

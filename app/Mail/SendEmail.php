@@ -25,7 +25,7 @@ class SendEmail extends Mailable
   {
     $this->token = $token;
     $this->email = $email;
-    $this->url = URL::temporarySignedRoute('auth-reset-password-basic', now()->addHours(1), ['token' => $token, 'email' => $email]);
+    $this->url = URL::temporarySignedRoute('auth-reset-password-basic', now()->addHours(72), ['token' => $token, 'email' => $email]);
   }
 
   /**

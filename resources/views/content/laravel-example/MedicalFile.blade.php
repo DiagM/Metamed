@@ -15,10 +15,92 @@
 @endsection
 
 @section('page-script')
-    @vite(['resources/js/laravel-MedicalFile.js', 'resources/assets/js/app-user-view.js', 'resources/assets/js/modal-edit-user.js'])
+    @vite(['resources/js/laravel-MedicalFile.js', 'resources/assets/js/app-user-view.js', 'resources/assets/js/modal-edit-user.js', 'resources/assets/js/modal-prescription.js'])
 @endsection
 
 @section('content')
+    <style>
+        #timeline {
+            max-height: 400px;
+            /* Adjust max-height as needed */
+            overflow-y: auto;
+            scrollbar-width: thin;
+            /* Thin scrollbar for Firefox */
+            scrollbar-color: rgba(0, 0, 0, 0.5) rgba(0, 0, 0, 0);
+            /* Customize scrollbar color for Firefox */
+        }
+
+        /* Thin scrollbar for WebKit browsers (Chrome, Safari, Edge) */
+        #timeline::-webkit-scrollbar {
+            width: 6px;
+            /* Width of the scrollbar */
+        }
+
+        #timeline::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            /* Track color */
+        }
+
+        #timeline::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.3);
+            /* Thumb color */
+            border-radius: 3px;
+            /* Rounded corners of the thumb */
+        }
+    </style>
+
+    <!-- Activity Timeline -->
+    <div class="card mb-4">
+        <h5 class="card-header">User Activity Timeline</h5>
+        <div class="card-body pb-0">
+            <ul id="timeline" class="timeline mb-0">
+                @forelse($reservations as $reservation)
+                    @php
+                        switch ($reservation->label) {
+                            case 'Consultation':
+                                $timelinePointClass = 'timeline-point-primary';
+                                break;
+                            case 'Procedure':
+                                $timelinePointClass = 'timeline-point-success';
+                                break;
+                            case 'Examination':
+                                $timelinePointClass = 'timeline-point-danger';
+                                break;
+                            case 'Follow-up':
+                                $timelinePointClass = 'timeline-point-warning';
+                                break;
+                            default:
+                                $timelinePointClass = 'timeline-point-info';
+                        }
+                    @endphp
+                    <li class="timeline-item timeline-item-transparent" data-label="{{ $reservation->label }}"
+                        data-datetime="{{ $reservation->start_datetime }}">
+                        <span class="timeline-point {{ $timelinePointClass }}"></span>
+                        <div class="timeline-event">
+                            <div class="timeline-header mb-1">
+                                <h6 class="mb-0">{{ $reservation->name }} - {{ $reservation->label }}</h6>
+                                <small class="text-muted">{{ $reservation->start_datetime }}</small>
+                            </div>
+                            <p class="mb-2">Start: {{ $reservation->start_datetime }}</p>
+                            <p class="mb-2">End: {{ $reservation->end_datetime }}</p>
+                            <p class="mb-0">{{ $reservation->description }}</p>
+                        </div>
+                    </li>
+                @empty
+                    <li class="timeline-item timeline-item-transparent">
+                        <span class="timeline-point timeline-point-primary"></span>
+                        <div class="timeline-event">
+                            <div class="timeline-header mb-1">
+                                <h6 class="mb-0">No Reservations Found</h6>
+                            </div>
+                        </div>
+                    </li>
+                @endforelse
+            </ul>
+        </div>
+    </div>
+    <!-- /Activity Timeline -->
+
     <h4 class="py-3 mb-4">
         <span class="text-muted fw-light">User / View /</span> Account
     </h4>
@@ -43,19 +125,19 @@
                         <div class="d-flex align-items-start me-4 mt-3 gap-2">
                             <span class="badge bg-label-primary p-2 rounded"><i class='ti ti-checkbox ti-sm'></i></span>
                             <div>
-                                <p class="mb-0 fw-medium">1.23k</p>
-                                <small>Tasks Done</small>
+                                <p class="mb-0 fw-medium">{{ $TotalVisits }}</p>
+                                <small>Total visits</small>
                             </div>
                         </div>
                         <div class="d-flex align-items-start mt-3 gap-2">
                             <span class="badge bg-label-primary p-2 rounded"><i class='ti ti-briefcase ti-sm'></i></span>
                             <div>
-                                <p class="mb-0 fw-medium">568</p>
-                                <small>Projects Done</small>
+                                <p class="mb-0 fw-medium">{{ $TotalMedicalFiles }}</p>
+                                <small>Total medical files</small>
                             </div>
                         </div>
                     </div>
-                    <p class="mt-4 small text-uppercase text-muted">Details</p>
+                    <p class="mt-4 small text-uppercase text-muted">User Details</p>
                     <div class="info-container">
                         <ul class="list-unstyled">
                             <li class="mb-2">
@@ -88,6 +170,14 @@
                                 <span>{{ $user->gender }}</span>
                             </li>
                             <li class="pt-1">
+                                <span class="fw-medium me-1">Height:</span>
+                                <span>{{ $user->height }} cm</span>
+                            </li>
+                            <li class="pt-1">
+                                <span class="fw-medium me-1">Weight:</span>
+                                <span>{{ $user->weight }} kg</span>
+                            </li>
+                            <li class="pt-1">
                                 <span class="fw-medium me-1">Address:</span>
                                 <span>{{ $user->address }}</span>
                             </li>
@@ -95,14 +185,40 @@
                         <div class="d-flex justify-content-center">
                             <a href="javascript:;" class="btn btn-primary me-3" data-bs-target="#editUser"
                                 data-bs-toggle="modal">Edit</a>
-                            <a href="javascript:;" class="btn btn-label-danger suspend-user">Suspended</a>
+                            {{-- <a href="javascript:;" class="btn btn-info suspend-user"data-bs-target="#editPrescription"
+                                data-bs-toggle="modal">prescription</a> --}}
+                            <a href="javascript:;" class="btn btn-info "data-bs-target="#editPrescription"
+                                data-bs-toggle="modal">prescription</a>
                         </div>
                     </div>
                 </div>
             </div>
             <!-- /User Card -->
-            <!-- Plan Card -->
+            <!-- medical Card -->
             <div class="card mb-4">
+                <div class="card-body">
+                    <p class="mt-4 small text-uppercase text-muted">Medical Details</p>
+                    <div class="info-container">
+                        <ul class="list-unstyled">
+                            <li class="pt-1">
+                                <span class="fw-medium me-1">Blood Type:</span>
+                                <span>{{ $user->blood_type }}</span>
+                            </li>
+                            <li class="pt-1">
+                                <span class="fw-medium me-1">Medical notes:</span>
+                                <span>{{ $user->medical_notes }}</span>
+                            </li>
+                            <li class="pt-1">
+                                <span class="fw-medium me-1">Allergies:</span>
+                                <span>{{ $user->allergies }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <!-- /medical Card -->
+            <!-- Plan Card -->
+            {{-- <div class="card mb-4">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start">
                         <span class="badge bg-label-primary">Standard</span>
@@ -131,7 +247,7 @@
                             Plan</button>
                     </div>
                 </div>
-            </div>
+            </div> --}}
             <!-- /Plan Card -->
         </div>
         <!--/ User Sidebar -->
@@ -143,14 +259,14 @@
             <ul class="nav nav-pills flex-column flex-md-row mb-4">
                 <li class="nav-item"><a class="nav-link active" href="javascript:void(0);"><i
                             class="ti ti-user-check ti-xs me-1"></i>Account</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url('app/user/view/security') }}"><i
+                {{-- <li class="nav-item"><a class="nav-link" href="{{ url('app/user/view/security') }}"><i
                             class="ti ti-lock ti-xs me-1"></i>Security</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url('app/user/view/billing') }}"><i
                             class="ti ti-currency-dollar ti-xs me-1"></i>Billing & Plans</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url('app/user/view/notifications') }}"><i
                             class="ti ti-bell ti-xs me-1"></i>Notifications</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url('app/user/view/connections') }}"><i
-                            class="ti ti-link ti-xs me-1"></i>Connections</a></li>
+                            class="ti ti-link ti-xs me-1"></i>Connections</a></li> --}}
             </ul>
             <!--/ User Pills -->
 
@@ -166,6 +282,7 @@
                                 <th>File Name</th>
                                 <th class="text-nowrap">Description</th>
                                 <th>Created_at</th>
+                                <th>Added_by</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -174,100 +291,74 @@
             </div>
             <!-- /Project table -->
 
+            <!-- Filter Controls -->
+            <div class="mb-4">
+                <label for="filterLabel" class="form-label">Filter by Label:</label>
+                <select id="filterLabel" class="form-select">
+                    <option value="">All Labels</option>
+                    <option value="Consultation">Consultation</option>
+                    <option value="Procedure">Procedure</option>
+                    <option value="Examination">Examination</option>
+                    <option value="Follow-up">Follow-up</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="filterDatetime" class="form-label">Filter by Reservation Date:</label>
+                <input type="date" id="filterDatetime" class="form-control">
+            </div>
+
             <!-- Activity Timeline -->
             <div class="card mb-4">
                 <h5 class="card-header">User Activity Timeline</h5>
                 <div class="card-body pb-0">
-                    <ul class="timeline mb-0">
-                        <li class="timeline-item timeline-item-transparent">
-                            <span class="timeline-point timeline-point-primary"></span>
-                            <div class="timeline-event">
-                                <div class="timeline-header mb-1">
-                                    <h6 class="mb-0">12 Invoices have been paid</h6>
-                                    <small class="text-muted">12 min ago</small>
+                    <ul id="timeline" class="timeline mb-0">
+                        @forelse($reservations as $reservation)
+                            @php
+                                switch ($reservation->label) {
+                                    case 'Consultation':
+                                        $timelinePointClass = 'timeline-point-primary';
+                                        break;
+                                    case 'Procedure':
+                                        $timelinePointClass = 'timeline-point-success';
+                                        break;
+                                    case 'Examination':
+                                        $timelinePointClass = 'timeline-point-danger';
+                                        break;
+                                    case 'Follow-up':
+                                        $timelinePointClass = 'timeline-point-warning';
+                                        break;
+                                    default:
+                                        $timelinePointClass = 'timeline-point-info';
+                                }
+                            @endphp
+                            <li class="timeline-item timeline-item-transparent" data-label="{{ $reservation->label }}"
+                                data-datetime="{{ $reservation->start_datetime }}">
+                                <span class="timeline-point {{ $timelinePointClass }}"></span>
+                                <div class="timeline-event">
+                                    <div class="timeline-header mb-1">
+                                        <h6 class="mb-0">{{ $reservation->name }} - {{ $reservation->label }}</h6>
+                                        <small class="text-muted">{{ $reservation->start_datetime }}</small>
+                                    </div>
+                                    <p class="mb-2">Start: {{ $reservation->start_datetime }}</p>
+                                    <p class="mb-2">End: {{ $reservation->end_datetime }}</p>
+                                    <p class="mb-0">{{ $reservation->description }}</p>
                                 </div>
-                                <p class="mb-2">Invoices have been paid to the company</p>
-                                <div class="d-flex">
-                                    <a href="javascript:void(0)" class="me-3">
-                                        <img src="{{ asset('assets/img/icons/misc/pdf.png') }}" alt="PDF image"
-                                            width="15" class="me-2">
-                                        <span class="fw-medium text-heading">invoices.pdf</span>
-                                    </a>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="timeline-item timeline-item-transparent">
-                            <span class="timeline-point timeline-point-warning"></span>
-                            <div class="timeline-event">
-                                <div class="timeline-header mb-1">
-                                    <h6 class="mb-0">Client Meeting</h6>
-                                    <small class="text-muted">45 min ago</small>
-                                </div>
-                                <p class="mb-2">Project meeting with john @10:15am</p>
-                                <div class="d-flex flex-wrap">
-                                    <div class="avatar me-3">
-                                        <img src="{{ asset('assets/img/avatars/3.png') }}" alt="Avatar"
-                                            class="rounded-circle" />
-                                    </div>
-                                    <div>
-                                        <h6 class="mb-0">Lester McCarthy (Client)</h6>
-                                        <small>CEO of {{ config('variables.creatorName') }}</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                        <li class="timeline-item timeline-item-transparent">
-                            <span class="timeline-point timeline-point-info"></span>
-                            <div class="timeline-event">
-                                <div class="timeline-header mb-1">
-                                    <h6 class="mb-0">Create a new project for client</h6>
-                                    <small class="text-muted">2 Day Ago</small>
-                                </div>
-                                <p class="mb-2">5 team members in a project</p>
-                                <div class="d-flex align-items-center avatar-group">
-                                    <div class="avatar pull-up" data-bs-toggle="tooltip" data-popup="tooltip-custom"
-                                        data-bs-placement="top" title="Vinnie Mostowy">
-                                        <img src="{{ asset('assets/img/avatars/5.png') }}" alt="Avatar"
-                                            class="rounded-circle">
-                                    </div>
-                                    <div class="avatar pull-up" data-bs-toggle="tooltip" data-popup="tooltip-custom"
-                                        data-bs-placement="top" title="Marrie Patty">
-                                        <img src="{{ asset('assets/img/avatars/12.png') }}" alt="Avatar"
-                                            class="rounded-circle">
-                                    </div>
-                                    <div class="avatar pull-up" data-bs-toggle="tooltip" data-popup="tooltip-custom"
-                                        data-bs-placement="top" title="Jimmy Jackson">
-                                        <img src="{{ asset('assets/img/avatars/9.png') }}" alt="Avatar"
-                                            class="rounded-circle">
-                                    </div>
-                                    <div class="avatar pull-up" data-bs-toggle="tooltip" data-popup="tooltip-custom"
-                                        data-bs-placement="top" title="Kristine Gill">
-                                        <img src="{{ asset('assets/img/avatars/6.png') }}" alt="Avatar"
-                                            class="rounded-circle">
-                                    </div>
-                                    <div class="avatar pull-up" data-bs-toggle="tooltip" data-popup="tooltip-custom"
-                                        data-bs-placement="top" title="Nelson Wilson">
-                                        <img src="{{ asset('assets/img/avatars/4.png') }}" alt="Avatar"
-                                            class="rounded-circle">
+                            </li>
+                        @empty
+                            <li class="timeline-item timeline-item-transparent">
+                                <span class="timeline-point timeline-point-primary"></span>
+                                <div class="timeline-event">
+                                    <div class="timeline-header mb-1">
+                                        <h6 class="mb-0">No Reservations Found</h6>
                                     </div>
                                 </div>
-                            </div>
-                        </li>
-                        <li class="timeline-item timeline-item-transparent border-transparent">
-                            <span class="timeline-point timeline-point-success"></span>
-                            <div class="timeline-event">
-                                <div class="timeline-header mb-1">
-                                    <h6 class="mb-0">Design Review</h6>
-                                    <small class="text-muted">5 days Ago</small>
-                                </div>
-                                <p class="mb-0">Weekly review of freshly prepared design for our new app.</p>
-                            </div>
-                        </li>
+                            </li>
+                        @endforelse
                     </ul>
                 </div>
             </div>
             <!-- /Activity Timeline -->
-
             <!-- Invoice table -->
             {{-- <div class="card mb-4">
                 <div class="table-responsive mb-3">
@@ -328,11 +419,52 @@
 
     <!-- Modal -->
     @include('_partials/_modals/modal-edit-user')
+    @include('_partials/_modals/modal-prescription')
     @include('_partials/_modals/modal-upgrade-plan')
     <!-- /Modal -->
     <script>
         window.userData = {!! json_encode(['id' => $user->id, 'name' => $user->name]) !!};
     </script>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterLabel = document.getElementById('filterLabel');
+            const filterDatetime = document.getElementById('filterDatetime');
+            const timelineItems = document.querySelectorAll('#timeline > li');
 
+            // Function to format date as YYYY-MM-DD for comparison
+            function formatDate(date) {
+                const d = new Date(date);
+                const year = d.getFullYear();
+                const month = ('0' + (d.getMonth() + 1)).slice(-2);
+                const day = ('0' + d.getDate()).slice(-2);
+                return `${year}-${month}-${day}`;
+            }
+
+            // Function to filter timeline items
+            function filterTimeline() {
+                const selectedLabel = filterLabel.value;
+                const selectedDatetime = filterDatetime.value;
+
+                timelineItems.forEach(item => {
+                    const itemLabel = item.getAttribute('data-label');
+                    const itemDatetime = item.getAttribute('data-datetime');
+
+                    const labelMatch = selectedLabel === '' || selectedLabel === itemLabel;
+                    const datetimeMatch = selectedDatetime === '' || formatDate(selectedDatetime) ===
+                        formatDate(itemDatetime);
+
+                    if (labelMatch && datetimeMatch) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            }
+
+            // Event listeners for filters
+            filterLabel.addEventListener('change', filterTimeline);
+            filterDatetime.addEventListener('change', filterTimeline);
+        });
+    </script>
 @endsection

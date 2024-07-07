@@ -80,12 +80,7 @@
                         <span class="align-middle">Arabic</span>
                     </a>
                 </li>
-                <li>
-                    <a class="dropdown-item {{ app()->getLocale() === 'de' ? 'active' : '' }}"
-                        href="{{ url('lang/de') }}" data-language="de" data-text-direction="ltr">
-                        <span class="align-middle">German</span>
-                    </a>
-                </li>
+
             </ul>
         </li>
         <!--/ Language -->
@@ -127,7 +122,7 @@
         @endif
 
         <!-- Quick links  -->
-        <li class="nav-item dropdown-shortcuts navbar-dropdown dropdown me-2 me-xl-0">
+        {{-- <li class="nav-item dropdown-shortcuts navbar-dropdown dropdown me-2 me-xl-0">
             <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown"
                 data-bs-auto-close="outside" aria-expanded="false">
                 <i class='ti ti-layout-grid-add ti-md'></i>
@@ -207,11 +202,11 @@
                     </div>
                 </div>
             </div>
-        </li>
+        </li> --}}
         <!-- Quick links -->
 
         <!-- Notification -->
-        <li class="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-1">
+        {{-- <li class="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-1">
             <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown"
                 data-bs-auto-close="outside" aria-expanded="false">
                 <i class="ti ti-bell ti-md"></i>
@@ -425,7 +420,7 @@
                     </a>
                 </li>
             </ul>
-        </li>
+        </li> --}}
         <!--/ Notification -->
 
         <!-- User -->

@@ -160,7 +160,7 @@ return [
       'size_limit' => env('MESSENGER_AVATARS_SIZE_LIMIT', 5120),
       'mime_types' => env('MESSENGER_AVATARS_MIME_TYPES', 'jpg,jpeg,png,bmp,gif,webp'),
     ],
-    'default_not_found_image' => public_path('assets/img/avatars/1.png'),
+    'default_not_found_image' => public_path('vendor/messenger/images/image404.png'),
     'default_ghost_avatar' => public_path('vendor/messenger/images/users.png'),
     'default_thread_avatar' => public_path('vendor/messenger/images/threads.png'),
     'default_bot_avatar' => public_path('vendor/messenger/images/bots.png'),
@@ -322,7 +322,7 @@ return [
     */
   'knocks' => [
     'enabled' => env('MESSENGER_KNOCKS_ENABLED', true),
-    'timeout' => env('MESSENGER_KNOCKS_TIMEOUT', 0),
+    'timeout' => env('MESSENGER_KNOCKS_TIMEOUT', 2),
   ],
 
   /*

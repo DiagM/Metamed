@@ -21,319 +21,290 @@ $(function () {
   });
 
   // Users datatable
-  if (dt_user_table.length) {
-    var dt_user = dt_user_table.DataTable({
+if (dt_user_table.length) {
+  var dt_user = dt_user_table.DataTable({
       processing: true,
       serverSide: true,
       ajax: {
-        url: baseUrl + 'MedicalFile-list',
-
+          url: baseUrl + 'MedicalFile-list',
       },
       columns: [
-        // columns according to JSON
-        { data: '' },
-        { data: 'id' },
-        { data: 'file_name' },
-        { data: 'description' },
-        { data: 'created_at' },
-        { data: 'action' }
+          { data: '' },
+          { data: 'id' },
+          { data: 'file_name' },
+          { data: 'description' },
+          { data: 'created_at' },
+          { data: 'doctor_name' }, // Add the doctor name column
+          { data: 'action' }
       ],
       columnDefs: [
-        {
-          // For Responsive
-          className: 'control',
-          searchable: false,
-          orderable: false,
-          responsivePriority: 2,
-          targets: 0,
-          render: function (data, type, full, meta) {
-            return '';
+          {
+              className: 'control',
+              searchable: false,
+              orderable: false,
+              responsivePriority: 2,
+              targets: 0,
+              render: function(data, type, full, meta) {
+                  return '';
+              }
+          },
+          {
+              searchable: false,
+              orderable: false,
+              targets: 1,
+              render: function(data, type, full, meta) {
+                  return `<span>${full.fake_id}</span>`;
+              }
+          },
+          {
+              targets: 2,
+              responsivePriority: 4,
+              render: function(data, type, full, meta) {
+                  var $name = full['file_name'];
+                  var stateNum = Math.floor(Math.random() * 6);
+                  var states = ['success', 'danger', 'warning', 'info', 'dark', 'primary', 'secondary'];
+                  var $state = states[stateNum],
+                      $name = full['file_name'],
+                      $initials = $name.match(/\b\w/g) || [],
+                      $output;
+                  $initials = (($initials.shift() || '') + ($initials.pop() || '')).toUpperCase();
+                  $output = '<span class="avatar-initial rounded-circle bg-label-' + $state + '">' + $initials + '</span>';
+
+                  var $row_output =
+                      '<div class="d-flex justify-content-start align-items-center user-name">' +
+                      '<div class="avatar-wrapper">' +
+                      '<div class="avatar avatar-sm me-3">' +
+                      $output +
+                      '</div>' +
+                      '</div>' +
+                      '<div class="d-flex flex-column">' +
+                      $name +
+                      '</span></a>' +
+                      '</div>' +
+                      '</div>';
+                  return $row_output;
+              }
+          },
+          {
+              targets: 3,
+              render: function(data, type, full, meta) {
+                  var $description = full['description'];
+                  return '<span class="user-description">' + $description + '</span>';
+              }
+          },
+          {
+              targets: 4,
+              render: function(data, type, full, meta) {
+                  var created_at = full['created_at'];
+                  var date = new Date(created_at);
+                  var formatted_date = date.toISOString().split('T')[0];
+                  return '<span class="created_at">' + formatted_date + '</span>';
+              }
+          },
+          {
+              targets: 5,
+              render: function(data, type, full, meta) {
+                  return '<span class="doctor-name">' + full['doctor_name'] + '</span>';
+              }
+          },
+          {
+              targets: -1,
+              title: 'Actions',
+              searchable: false,
+              orderable: false,
+              render: function(data, type, full, meta) {
+                  return (
+                      '<div class="d-inline-block text-nowrap">' +
+                      `<button class="btn btn-sm btn-icon edit-record" data-id="${full['id']}" data-bs-toggle="offcanvas" data-bs-target="#offcanvasAddMedicalFile"><i class="ti ti-edit"></i></button>` +
+                      `<button class="btn btn-sm btn-icon download-record" data-file="${full['file_path']}"><i class="ti ti-download"></i></button>` +
+                      `<button class="btn btn-sm btn-icon delete-record" data-id="${full['id']}"><i class="ti ti-trash"></i></button>` +
+                      '<button class="btn btn-sm btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></button>' +
+
+                      '</div>'
+                  );
+              }
           }
-        },
-        {
-          searchable: false,
-          orderable: false,
-          targets: 1,
-          render: function (data, type, full, meta) {
-            return `<span>${full.fake_id}</span>`;
-          }
-        },
-        {
-          // User full name
-          targets: 2,
-          responsivePriority: 4,
-          render: function (data, type, full, meta) {
-            var $name = full['file_name'];
-
-            // For Avatar badge
-            var stateNum = Math.floor(Math.random() * 6);
-            var states = ['success', 'danger', 'warning', 'info', 'dark', 'primary', 'secondary'];
-            var $state = states[stateNum],
-              $name = full['file_name'],
-              $initials = $name.match(/\b\w/g) || [],
-              $output;
-            $initials = (($initials.shift() || '') + ($initials.pop() || '')).toUpperCase();
-            $output = '<span class="avatar-initial rounded-circle bg-label-' + $state + '">' + $initials + '</span>';
-
-            // Creates full output for row
-            var $row_output =
-              '<div class="d-flex justify-content-start align-items-center user-name">' +
-              '<div class="avatar-wrapper">' +
-              '<div class="avatar avatar-sm me-3">' +
-              $output +
-              '</div>' +
-              '</div>' +
-              '<div class="d-flex flex-column">' +
-              $name +
-              '</span></a>' +
-              '</div>' +
-              '</div>';
-            return $row_output;
-          }
-        },
-        {
-          // User description
-          targets: 3,
-          render: function (data, type, full, meta) {
-            var $description = full['description'];
-
-            return '<span class="user-description">' + $description + '</span>';
-          }
-        },
-        {
-          //created_at
-          targets: 4,
-          render: function (data, type, full, meta) {
-              var created_at = full['created_at'];
-              // Parse the timestamp into a Date object
-              var date = new Date(created_at);
-              // Format the date to display only the date part (YYYY-MM-DD)
-              var formatted_date = date.toISOString().split('T')[0];
-              return '<span class="created_at">' + formatted_date + '</span>';
-          }
-        },
-
-
-        {
-          // Actions
-          targets: -1,
-          title: 'Actions',
-          searchable: false,
-          orderable: false,
-          render: function (data, type, full, meta) {
-
-            return (
-              '<div class="d-inline-block text-nowrap">' +
-              `<button class="btn btn-sm btn-icon edit-record" data-id="${full['id']}" data-bs-toggle="offcanvas" data-bs-target="#offcanvasAddMedicalFile"><i class="ti ti-edit"></i></button>` +
-              `<button class="btn btn-sm btn-icon download-record" data-file="${full['file_path']}"><i class="ti ti-download"></i></button>` +
-              `<button class="btn btn-sm btn-icon delete-record" data-id="${full['id']}"><i class="ti ti-trash"></i></button>` +
-              '<button class="btn btn-sm btn-icon dropdown-toggle hide-arrow" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></button>' +
-              '<div class="dropdown-menu dropdown-menu-end m-0">' +
-              '<a href="javascript:;" class="dropdown-item view-record" data-id="' + full['id'] + '">View</a>' +
-
-              '<a href="javascript:;" class="dropdown-item">Suspend</a>' +
-              '</div>' +
-              '</div>'
-            );
-          }
-        }
       ],
       order: [[2, 'desc']],
       dom:
-        '<"row mx-2"' +
-        '<"col-md-2"<"me-3"l>>' +
-        '<"col-md-10"<"dt-action-buttons text-xl-end text-lg-start text-md-end text-start d-flex align-items-center justify-content-end flex-md-row flex-column mb-3 mb-md-0"fB>>' +
-        '>t' +
-        '<"row mx-2"' +
-        '<"col-sm-12 col-md-6"i>' +
-        '<"col-sm-12 col-md-6"p>' +
-        '>',
+          '<"row mx-2"' +
+          '<"col-md-2"<"me-3"l>>' +
+          '<"col-md-10"<"dt-action-buttons text-xl-end text-lg-start text-md-end text-start d-flex align-items-center justify-content-end flex-md-row flex-column mb-3 mb-md-0"fB>>' +
+          '>t' +
+          '<"row mx-2"' +
+          '<"col-sm-12 col-md-6"i>' +
+          '<"col-sm-12 col-md-6"p>' +
+          '>',
       language: {
-        sLengthMenu: '_MENU_',
-        search: '',
-        searchPlaceholder: 'Search..'
+          sLengthMenu: '_MENU_',
+          search: '',
+          searchPlaceholder: 'Search..'
       },
-      // Buttons with Dropdown
       buttons: [
-        {
-          extend: 'collection',
-          className: 'btn btn-label-primary dropdown-toggle mx-3 waves-effect waves-light',
-          text: '<i class="ti ti-logout rotate-n90 me-2"></i>Export',
-          buttons: [
-            {
-              extend: 'print',
-              title: 'Users',
-              text: '<i class="ti ti-printer me-2" ></i>Print',
-              className: 'dropdown-item',
-              exportOptions: {
-                columns: [2, 3],
-                // prevent avatar to be print
-                format: {
-                  body: function (inner, coldex, rowdex) {
-                    if (inner.length <= 0) return inner;
-                    var el = $.parseHTML(inner);
-                    var result = '';
-                    $.each(el, function (index, item) {
-                      if (item.classList !== undefined && item.classList.contains('user-name')) {
-                        result = result + item.lastChild.textContent;
-                      } else result = result + item.innerText;
-                    });
-                    return result;
+          {
+              extend: 'collection',
+              className: 'btn btn-label-primary dropdown-toggle mx-3 waves-effect waves-light',
+              text: '<i class="ti ti-logout rotate-n90 me-2"></i>Export',
+              buttons: [
+                  {
+                      extend: 'print',
+                      title: 'Users',
+                      text: '<i class="ti ti-printer me-2" ></i>Print',
+                      className: 'dropdown-item',
+                      exportOptions: {
+                          columns: [2, 3],
+                          format: {
+                              body: function(inner, coldex, rowdex) {
+                                  if (inner.length <= 0) return inner;
+                                  var el = $.parseHTML(inner);
+                                  var result = '';
+                                  $.each(el, function(index, item) {
+                                      if (item.classList !== undefined && item.classList.contains('user-name')) {
+                                          result = result + item.lastChild.textContent;
+                                      } else result = result + item.innerText;
+                                  });
+                                  return result;
+                              }
+                          }
+                      },
+                      customize: function(win) {
+                          $(win.document.body)
+                              .css('color', config.colors.headingColor)
+                              .css('border-color', config.colors.borderColor)
+                              .css('background-color', config.colors.body);
+                          $(win.document.body)
+                              .find('table')
+                              .addClass('compact')
+                              .css('color', 'inherit')
+                              .css('border-color', 'inherit')
+                              .css('background-color', 'inherit');
+                      }
+                  },
+                  {
+                      extend: 'csv',
+                      title: 'Medical File',
+                      text: '<i class="ti ti-file-text me-2" ></i>Csv',
+                      className: 'dropdown-item',
+                      exportOptions: {
+                          columns: [2, 3, 4],
+                          format: {
+                              body: function(inner, coldex, rowdex) {
+                                  if (inner.length <= 0) return inner;
+                                  var el = $.parseHTML(inner);
+                                  var result = '';
+                                  $.each(el, function(index, item) {
+                                      if (item.classList.contains('file_name')) {
+                                          result = result + item.lastChild.textContent;
+                                      } else result = result + item.innerText;
+                                  });
+                                  return result;
+                              }
+                          }
+                      }
+                  },
+                  {
+                      extend: 'excel',
+                      title: 'Medical File',
+                      text: '<i class="ti ti-file-spreadsheet me-2"></i>Excel',
+                      className: 'dropdown-item',
+                      exportOptions: {
+                          columns: [2, 3, 4],
+                          format: {
+                              body: function(inner, coldex, rowdex) {
+                                  if (inner.length <= 0) return inner;
+                                  var el = $.parseHTML(inner);
+                                  var result = '';
+                                  $.each(el, function(index, item) {
+                                      if (item.classList.contains('file_name')) {
+                                          result = result + item.lastChild.textContent;
+                                      } else result = result + item.innerText;
+                                  });
+                                  return result;
+                              }
+                          }
+                      }
+                  },
+                  {
+                      extend: 'pdf',
+                      title: 'Users',
+                      text: '<i class="ti ti-file-text me-2"></i>Pdf',
+                      className: 'dropdown-item',
+                      exportOptions: {
+                          columns: [2, 3],
+                          format: {
+                              body: function(inner, coldex, rowdex) {
+                                  if (inner.length <= 0) return inner;
+                                  var el = $.parseHTML(inner);
+                                  var result = '';
+                                  $.each(el, function(index, item) {
+                                      if (item.classList.contains('user-name')) {
+                                          result = result + item.lastChild.textContent;
+                                      } else result = result + item.innerText;
+                                  });
+                                  return result;
+                              }
+                          }
+                      }
+                  },
+                  {
+                      extend: 'copy',
+                      title: 'Users',
+                      text: '<i class="ti ti-copy me-1" ></i>Copy',
+                      className: 'dropdown-item',
+                      exportOptions: {
+                          columns: [2, 3],
+                          format: {
+                              body: function(inner, coldex, rowdex) {
+                                  if (inner.length <= 0) return inner;
+                                  var el = $.parseHTML(inner);
+                                  var result = '';
+                                  $.each(el, function(index, item) {
+                                      if (item.classList.contains('user-name')) {
+                                          result = result + item.lastChild.textContent;
+                                      } else result = result + item.innerText;
+                                  });
+                                  return result;
+                              }
+                          }
+                      }
                   }
-                }
-              },
-              customize: function (win) {
-                //customize print view for dark
-                $(win.document.body)
-                  .css('color', config.colors.headingColor)
-                  .css('border-color', config.colors.borderColor)
-                  .css('background-color', config.colors.body);
-                $(win.document.body)
-                  .find('table')
-                  .addClass('compact')
-                  .css('color', 'inherit')
-                  .css('border-color', 'inherit')
-                  .css('background-color', 'inherit');
+              ]
+          },
+          {
+              text: '<i class="ti ti-plus me-0 me-sm-1"></i><span class="d-none d-sm-inline-block">Add New File</span>',
+              className: 'add-new btn btn-primary waves-effect waves-light',
+              attr: {
+                  'data-bs-toggle': 'offcanvas',
+                  'data-bs-target': '#offcanvasAddMedicalFile'
               }
-            },
-            {
-              extend: 'csv',
-              title: 'Medical File',
-              text: '<i class="ti ti-file-text me-2" ></i>Csv',
-              className: 'dropdown-item',
-              exportOptions: {
-                columns: [2, 3, 4],
-                // prevent avatar to be print
-                format: {
-                  body: function (inner, coldex, rowdex) {
-                    if (inner.length <= 0) return inner;
-                    var el = $.parseHTML(inner);
-                    var result = '';
-                    $.each(el, function (index, item) {
-                      if (item.classList.contains('file_name')) {
-                        result = result + item.lastChild.textContent;
-                      } else result = result + item.innerText;
-                    });
-                    return result;
-                  }
-                }
-              }
-            },
-            {
-              extend: 'excel',
-              title: 'Medical File',
-              text: '<i class="ti ti-file-spreadsheet me-2"></i>Excel',
-              className: 'dropdown-item',
-              exportOptions: {
-                columns: [2, 3, 4],
-                // prevent avatar to be display
-                format: {
-                  body: function (inner, coldex, rowdex) {
-                    if (inner.length <= 0) return inner;
-                    var el = $.parseHTML(inner);
-                    var result = '';
-                    $.each(el, function (index, item) {
-                      if (item.classList.contains('file_name')) {
-                        result = result + item.lastChild.textContent;
-                      } else result = result + item.innerText;
-                    });
-                    return result;
-                  }
-                }
-              }
-            },
-            {
-              extend: 'pdf',
-              title: 'Users',
-              text: '<i class="ti ti-file-text me-2"></i>Pdf',
-              className: 'dropdown-item',
-              exportOptions: {
-                columns: [2, 3],
-                // prevent avatar to be display
-                format: {
-                  body: function (inner, coldex, rowdex) {
-                    if (inner.length <= 0) return inner;
-                    var el = $.parseHTML(inner);
-                    var result = '';
-                    $.each(el, function (index, item) {
-                      if (item.classList.contains('user-name')) {
-                        result = result + item.lastChild.textContent;
-                      } else result = result + item.innerText;
-                    });
-                    return result;
-                  }
-                }
-              }
-            },
-            {
-              extend: 'copy',
-              title: 'Users',
-              text: '<i class="ti ti-copy me-1" ></i>Copy',
-              className: 'dropdown-item',
-              exportOptions: {
-                columns: [2, 3],
-                // prevent avatar to be copy
-                format: {
-                  body: function (inner, coldex, rowdex) {
-                    if (inner.length <= 0) return inner;
-                    var el = $.parseHTML(inner);
-                    var result = '';
-                    $.each(el, function (index, item) {
-                      if (item.classList.contains('user-name')) {
-                        result = result + item.lastChild.textContent;
-                      } else result = result + item.innerText;
-                    });
-                    return result;
-                  }
-                }
-              }
-            }
-          ]
-        },
-        {
-          text: '<i class="ti ti-plus me-0 me-sm-1"></i><span class="d-none d-sm-inline-block">Add New File</span>',
-          className: 'add-new btn btn-primary waves-effect waves-light',
-          attr: {
-            'data-bs-toggle': 'offcanvas',
-            'data-bs-target': '#offcanvasAddMedicalFile'
           }
-        }
       ],
-      // For responsive popup
       responsive: {
-        details: {
-          display: $.fn.dataTable.Responsive.display.modal({
-            header: function (row) {
-              var data = row.data();
-              return 'Details of ' + data['name'];
-            }
-          }),
-          type: 'column',
-          renderer: function (api, rowIdx, columns) {
-            var data = $.map(columns, function (col, i) {
-              return col.title !== '' // ? Do not show row in modal popup if title is blank (for check box)
-                ? '<tr data-dt-row="' +
-                    col.rowIndex +
-                    '" data-dt-column="' +
-                    col.columnIndex +
-                    '">' +
-                    '<td>' +
-                    col.title +
-                    ':' +
-                    '</td> ' +
-                    '<td>' +
-                    col.data +
-                    '</td>' +
-                    '</tr>'
-                : '';
-            }).join('');
+          details: {
+              display: $.fn.dataTable.Responsive.display.modal({
+                  header: function(row) {
+                      var data = row.data();
+                      return 'Details of ' + data['name'];
+                  }
+              }),
+              type: 'column',
+              renderer: function(api, rowIdx, columns) {
+                  var data = $.map(columns, function(col, i) {
+                      return col.title !== ''
+                          ? '<tr data-dt-row="' + col.rowIndex + '" data-dt-column="' + col.columnIndex + '">' +
+                            '<td>' + col.title + ':</td> ' +
+                            '<td>' + col.data + '</td>' +
+                            '</tr>'
+                          : '';
+                  }).join('');
 
-            return data ? $('<table class="table"/><tbody />').append(data) : false;
+                  return data ? $('<table class="table"/><tbody />').append(data) : false;
+              }
           }
-        }
       }
-    });
-  }
+  });
+}
+
 // Handle department filter change
 $('#filter-department').change(function () {
   dt_user.draw(); // Redraw datatable on department filter change
