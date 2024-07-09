@@ -15,7 +15,10 @@
 @endsection
 
 @section('page-script')
-    @vite(['resources/assets/js/app-calendar-events.js', 'resources/assets/js/app-calendar.js'])
+    <script>
+        const userId = {{ Auth::id() }};
+    </script>
+    @vite(['resources/assets/js/app-calendar-events.js', 'resources/assets/js/app-calendar.js', 'resources/assets/js/forms-selects.js'])
 @endsection
 
 @section('content')
@@ -44,7 +47,7 @@
                     </div>
                     <div class="mb-3 select2-primary">
                         <label class="form-label" for="filterPatients">Select Patients</label>
-                        <select class="select2 select-filter-patients form-select" id="filterPatients"
+                        <select class="select2 form-select form-select-lg" data-allow-clear="true" id="filterPatients"
                             name="filterPatients[]" multiple>
                             @foreach ($patients as $patient)
                                 <option value="{{ $patient->id }}">{{ $patient->name }}</option>
@@ -52,6 +55,18 @@
                         </select>
 
                     </div>
+                    @hasanyrole('department|hospital|SuperAdmin')
+                        <div class="mb-3 select2-primary">
+                            <label class="form-label" for="filterDoctors">Select doctors</label>
+                            <select class="select2 form-select form-select-lg" data-allow-clear="true" id="filterDoctors"
+                                name="filterDoctors[]" multiple>
+                                @foreach ($doctors as $doctor)
+                                    <option value="{{ $doctor->id }}">{{ $doctor->name }}</option>
+                                @endforeach
+                            </select>
+
+                        </div>
+                    @endhasanyrole
 
 
                     <div class="form-check mb-2 ms-3">
@@ -158,7 +173,7 @@
                                     placeholder="https://www.google.com" />
                             </div> --}}
 
-                            <div class="mb-3 select2-primary">
+                            {{-- <div class="mb-3 select2-primary">
                                 <label class="form-label" for="eventDoctors">Select Doctor</label>
                                 <select class="select2 select-event-doctors form-select" id="eventDoctors"
                                     name="eventDoctors">
@@ -170,6 +185,13 @@
                                 </select>
                                 <span class="error-message alert-danger" id="eventDoctors-error"></span>
 
+                            </div> --}}
+                            <div class="mb-3">
+                                <label class="form-label" for="eventDoctors">Select Doctor</label>
+                                <input type="text" class="form-control" id="eventDoctors" name="eventDoctors"
+                                    placeholder="Enter Doctor's Name" autocomplete="off" value="{{ Auth::id() }}"
+                                    disabled>
+                                <span class="error-message alert-danger" id="eventDoctors-error"></span>
                             </div>
 
                             <div class="mb-3 select2-primary">
@@ -210,4 +232,5 @@
             <!-- /Calendar & Modal -->
         </div>
     </div>
+
 @endsection

@@ -20,26 +20,79 @@ class UserManagement extends Controller
    */
   public function UserManagement()
   {
+    $user = Auth::user();
     // Get the "doctor" role
     $doctorRole = Role::findByName('doctor');
 
+    if ($user->hasRole('hospital')) {
+      // Retrieve departments of the hospital
+      $departments = $user->departments;
+      $doctors = collect();
+      foreach ($departments as $department) {
+        $departmentDoctors = $department->doctorsdepartment;
+        $doctors = $doctors->merge($departmentDoctors);
+      }
+    } elseif ($user->hasRole('department')) {
+      // Retrieve doctors of the department
+      $doctors = $user->doctorsdepartment;
+    } elseif ($user->hasRole('SuperAdmin')) {
 
-    // Retrieve users with the "doctor" role
-    $users = User::whereHas('roles', function ($query) use ($doctorRole) {
-      $query->where('role_id', $doctorRole->id);
-    })->where('department_id', Auth::id())->get();
-    $userCount = $users->count();
-    $verified = User::whereNotNull('email_verified_at')->get()->count();
-    $notVerified = User::whereNull('email_verified_at')->get()->count();
-    $usersUnique = $users->unique(['email']);
-    $userDuplicates = $users->diff($usersUnique)->count();
+      $doctorRole = Role::findByName('doctor');
+      $doctors = User::whereHas('roles', function ($query) use ($doctorRole) {
+        $query->where('role_id', $doctorRole->id);
+      })->get();
 
-    return view('content.laravel-example.user-management', [
-      'totalUser' => $userCount,
-      'verified' => $verified,
-      'notVerified' => $notVerified,
-      'userDuplicates' => $userDuplicates,
-    ]);
+      $hospitalRole = Role::findByName('hospital');
+      $hospitals = User::whereHas('roles', function ($query) use ($hospitalRole) {
+        $query->where('role_id', $hospitalRole->id);
+      })->get();
+      $departmentrole = Role::findByName('department');
+
+      $departments = User::whereHas('roles', function ($query) use ($departmentrole) {
+        $query->where('role_id', $departmentrole->id);
+      })->get();
+    }
+
+    // Calculate the number of reservations per doctor
+    $doctors->each(function ($doctor) {
+      $doctor->reservation_count = $doctor->doctorReservations()->count();
+    });
+
+    // Find the doctor with the most reservations
+    $doctorWithMostReservations = $doctors->sortByDesc('reservation_count')->first();
+    $mostReservationsCount = $doctorWithMostReservations ? $doctorWithMostReservations->reservation_count : 0;
+
+    // Find the doctor with the least reservations
+    $doctorWithLeastReservations = $doctors->sortBy('reservation_count')->first();
+    $leastReservationsCount = $doctorWithLeastReservations ? $doctorWithLeastReservations->reservation_count : 0;
+
+    if ($user->hasRole('department')) {
+      return view('content.laravel-example.user-management', [
+        'totalDoctors' => $doctors->count(),
+        'mostReservationsDoctor' => $doctorWithMostReservations,
+        'mostReservationsCount' => $mostReservationsCount,
+        'leastReservationsDoctor' => $doctorWithLeastReservations,
+        'leastReservationsCount' => $leastReservationsCount,
+      ]);
+    } elseif ($user->hasRole('hospital')) {
+      return view('content.laravel-example.user-management', [
+        'totalDoctors' => $doctors->count(),
+        'mostReservationsDoctor' => $doctorWithMostReservations,
+        'mostReservationsCount' => $mostReservationsCount,
+        'leastReservationsDoctor' => $doctorWithLeastReservations,
+        'leastReservationsCount' => $leastReservationsCount,
+        'departments' => $departments,
+      ]);
+    } elseif ($user->hasRole('SuperAdmin')) {
+      return view('content.laravel-example.user-management', [
+        'totalDoctors' => $doctors->count(),
+        'mostReservationsDoctor' => $doctorWithMostReservations,
+        'mostReservationsCount' => $mostReservationsCount,
+        'leastReservationsDoctor' => $doctorWithLeastReservations,
+        'leastReservationsCount' => $leastReservationsCount,
+        'hospitals' => $hospitals
+      ]);
+    }
   }
 
   /**
@@ -57,14 +110,33 @@ class UserManagement extends Controller
       5 => 'department',
     ];
 
-    // Get the "department" role
-    $departmentRole = Role::where('name', 'doctor')->first();
+    $user = Auth::user();
+    $doctorRole = Role::where('name', 'doctor')->first();
+    // Get the "doctor" role
+    if ($user->hasRole('department')) {
 
-    // Initialize the user query builder with the "department" role constraint
-    $usersQuery = User::whereHas('roles', function ($query) use ($departmentRole) {
-      $query->where('id', $departmentRole->id);
-    })->where('department_id', Auth::id())->with('department');
 
+      // Initialize the user query builder with the "department" role constraint
+      $usersQuery = User::whereHas('roles', function ($query) use ($doctorRole) {
+        $query->where('id', $doctorRole->id);
+      })->where('department_id', Auth::id())->with('doctorsdepartment');
+    } elseif ($user->hasRole('hospital')) {
+      $hospital = $user;
+      $departments = $hospital->departments;
+
+      $doctors = collect();
+      foreach ($departments as $department) {
+        $departmentDoctors = $department->doctorsdepartment;
+        $doctors = $doctors->merge($departmentDoctors);
+      }
+      // Create a query builder for the collected patients
+      $usersQuery = User::whereIn('id', $doctors->pluck('id'));
+    } elseif ($user->hasRole('SuperAdmin')) {
+      // Initialize the user query builder with the "patient" role constraint
+      $usersQuery = User::whereHas('roles', function ($query) use ($doctorRole) {
+        $query->where('role_id', $doctorRole->id);
+      });
+    }
     // Apply search filter if provided
     if ($request->filled('search.value')) {
       $search = $request->input('search.value');
@@ -78,7 +150,19 @@ class UserManagement extends Controller
           });
       });
     }
-
+    // Apply department_name filter if provided
+    if ($request->filled('department_name')) {
+      $departmentName = $request->input('department_name');
+      $usersQuery->whereHas('department', function ($query) use ($departmentName) {
+        $query->where('id', 'LIKE', "%{$departmentName}%");
+      });
+    }
+    if ($request->filled('hospital_name')) {
+      $departmentName = $request->input('hospital_name');
+      $usersQuery->whereHas('department.hospital', function ($query) use ($departmentName) {
+        $query->where('id', 'LIKE', "%{$departmentName}%");
+      });
+    }
 
     // Get the total count of filtered records before pagination
     $totalFiltered = $usersQuery->count();

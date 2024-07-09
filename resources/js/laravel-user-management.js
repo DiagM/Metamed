@@ -35,8 +35,10 @@ $(function () {
       ajax: {
         url: baseUrl + 'user-list',
         data: function (d) {
-          d.department = $('#filter-department').val(); // Pass department filter value
-      }
+          d.department_name = $('#filter-department-name').val(); // Include department_name filter
+          d.hospital_name = $('#filter-hospital-name').val(); // Include hospital_name filter
+
+        }
       },
       columns: [
         // columns according to JSON
@@ -182,7 +184,7 @@ $(function () {
               text: '<i class="ti ti-printer me-2" ></i>Print',
               className: 'dropdown-item',
               exportOptions: {
-                columns: [2, 3],
+                columns: [2,3,4,5],
                 // prevent avatar to be print
                 format: {
                   body: function (inner, coldex, rowdex) {
@@ -218,7 +220,7 @@ $(function () {
               text: '<i class="ti ti-file-text me-2" ></i>Csv',
               className: 'dropdown-item',
               exportOptions: {
-                columns: [2, 3],
+                columns: [2,3,4,5],
                 // prevent avatar to be print
                 format: {
                   body: function (inner, coldex, rowdex) {
@@ -241,30 +243,7 @@ $(function () {
               text: '<i class="ti ti-file-spreadsheet me-2"></i>Excel',
               className: 'dropdown-item',
               exportOptions: {
-                columns: [2, 3],
-                // prevent avatar to be display
-                format: {
-                  body: function (inner, coldex, rowdex) {
-                    if (inner.length <= 0) return inner;
-                    var el = $.parseHTML(inner);
-                    var result = '';
-                    $.each(el, function (index, item) {
-                      if (item.classList.contains('user-name')) {
-                        result = result + item.lastChild.textContent;
-                      } else result = result + item.innerText;
-                    });
-                    return result;
-                  }
-                }
-              }
-            },
-            {
-              extend: 'pdf',
-              title: 'Users',
-              text: '<i class="ti ti-file-text me-2"></i>Pdf',
-              className: 'dropdown-item',
-              exportOptions: {
-                columns: [2, 3],
+                columns: [2,3,4,5],
                 // prevent avatar to be display
                 format: {
                   body: function (inner, coldex, rowdex) {
@@ -287,7 +266,7 @@ $(function () {
               text: '<i class="ti ti-copy me-1" ></i>Copy',
               className: 'dropdown-item',
               exportOptions: {
-                columns: [2, 3],
+                columns: [2,3,4,5],
                 // prevent avatar to be copy
                 format: {
                   body: function (inner, coldex, rowdex) {
@@ -351,7 +330,10 @@ $(function () {
     });
   }
 // Handle department filter change
-$('#filter-department').change(function () {
+$('#filter-department-name').change(function () {
+  dt_user.draw(); // Redraw datatable on department filter change
+});
+$('#filter-hospital-name').change(function () {
   dt_user.draw(); // Redraw datatable on department filter change
 });
   // Delete Record
@@ -427,13 +409,13 @@ $('#filter-department').change(function () {
 
     // get data
     $.get(`${baseUrl}user-list\/${user_id}\/edit`, function (data) {
-      console.log(data.department);
+      // console.log(data.department);
       $('#user_id').val(data.id);
       $('#add-user-fullname').val(data.name);
       $('#add-user-email').val(data.email);
       $('#add-user-contact').val(data.contact);
       $('#add-user-license_number').val(data.license_number);
-      $('#department').val(data.department);
+      // $('#department').val(data.department);
     });
   });
 
@@ -441,7 +423,7 @@ $('#filter-department').change(function () {
   $('.add-new').on('click', function () {
     $('#user_id').val(''); //reseting input field
     $('#offcanvasAddUserLabel').html('Add User');
-    $('#department').val("");
+    // $('#department').val("");
   });
 
   // Filter form control to default size
@@ -488,13 +470,13 @@ $('#filter-department').change(function () {
           }
         }
       },
-      department: {
-        validators: {
-          notEmpty: {
-            message: 'Please enter your department'
-          }
-        }
-      }
+      // department: {
+      //   validators: {
+      //     notEmpty: {
+      //       message: 'Please enter your department'
+      //     }
+      //   }
+      // }
     },
     plugins: {
       trigger: new FormValidation.plugins.Trigger(),

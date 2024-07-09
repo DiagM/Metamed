@@ -192,11 +192,11 @@ $(function () {
           buttons: [
             {
               extend: 'print',
-              title: 'Users',
+              title: 'Patients',
               text: '<i class="ti ti-printer me-2" ></i>Print',
               className: 'dropdown-item',
               exportOptions: {
-                columns: [2, 3],
+                columns: [2, 3,4,5,6],
                 // prevent avatar to be print
                 format: {
                   body: function (inner, coldex, rowdex) {
@@ -228,12 +228,11 @@ $(function () {
             },
             {
               extend: 'csv',
-              title: 'Users',
-              text: '<i class="ti ti-file-text me-2" ></i>Csv',
+              title: 'Patients',
+              text: '<i class="ti ti-file-text me-2"></i>Csv',
               className: 'dropdown-item',
               exportOptions: {
-                columns: [2, 3],
-                // prevent avatar to be print
+                columns: [2, 3, 4, 5, 6], // Include columns to export
                 format: {
                   body: function (inner, coldex, rowdex) {
                     if (inner.length <= 0) return inner;
@@ -249,9 +248,10 @@ $(function () {
                 }
               }
             },
+
             {
               extend: 'excel',
-              title: 'Users',
+              title: 'Patients',
               text: '<i class="ti ti-file-spreadsheet me-2"></i>Excel',
               className: 'dropdown-item',
               exportOptions: {
@@ -272,37 +272,14 @@ $(function () {
                 }
               }
             },
-            {
-              extend: 'pdf',
-              title: 'Users',
-              text: '<i class="ti ti-file-text me-2"></i>Pdf',
-              className: 'dropdown-item',
-              exportOptions: {
-                columns: [2, 3],
-                // prevent avatar to be display
-                format: {
-                  body: function (inner, coldex, rowdex) {
-                    if (inner.length <= 0) return inner;
-                    var el = $.parseHTML(inner);
-                    var result = '';
-                    $.each(el, function (index, item) {
-                      if (item.classList.contains('user-name')) {
-                        result = result + item.lastChild.textContent;
-                      } else result = result + item.innerText;
-                    });
-                    return result;
-                  }
-                }
-              }
-            },
+
             {
               extend: 'copy',
-              title: 'Users',
+              title: 'Patients',
               text: '<i class="ti ti-copy me-1" ></i>Copy',
               className: 'dropdown-item',
               exportOptions: {
-                columns: [2, 3],
-                // prevent avatar to be copy
+                columns: [2, 3, 4, 5, 6], // Include columns to copy
                 format: {
                   body: function (inner, coldex, rowdex) {
                     if (inner.length <= 0) return inner;
@@ -318,6 +295,7 @@ $(function () {
                 }
               }
             }
+
           ]
         },
         {
@@ -363,16 +341,17 @@ $(function () {
         }
       }
     });
-        // Event listener for blood type filter change
-        $('#filter-blood-type').change(function () {
+
+  }
+          // Event listener for blood type filter change
+          $('#filter-blood-type').change(function () {
+            dt_user.draw();
+        });
+
+        // Event listener for doctor name filter change
+        $('#filter-doctor-name').change(function () {
           dt_user.draw();
       });
-
-      // Event listener for doctor name filter change
-      $('#filter-doctor-name').change(function () {
-        dt_user.draw();
-    });
-  }
 // Handle department filter change
 $('#filter-department-name').change(function () {
   dt_user.draw(); // Redraw datatable on department filter change

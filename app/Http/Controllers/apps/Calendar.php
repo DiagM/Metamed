@@ -11,30 +11,75 @@ use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 use App\Notifications\ReservationReminderNotification;
 use DateTime;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
 
 class Calendar extends Controller
 {
   public function index()
   {
-    // Get the "patient" role
-    $patientRole = Role::findByName('patient');
-    $doctorRole = Role::findByName('doctor');
-    // Retrieve users with the "patient" role
-    $patients = User::whereHas('roles', function ($query) use ($patientRole) {
-      $query->where('role_id', $patientRole->id);
-    })->get();
-    $doctors = User::whereHas('roles', function ($query) use ($doctorRole) {
-      $query->where('role_id', $doctorRole->id);
-    })->get();
-    return view('content.apps.app-calendar', compact('patients', 'doctors'));
+    $user = Auth::user();
+    if ($user->hasRole('SuperAdmin')) {
+      // Get the "patient" role
+      $patientRole = Role::findByName('patient');
+      $doctorRole = Role::findByName('doctor');
+      // Retrieve users with the "patient" role
+      $patients = User::whereHas('roles', function ($query) use ($patientRole) {
+        $query->where('role_id', $patientRole->id);
+      })->get();
+      $doctors = User::whereHas('roles', function ($query) use ($doctorRole) {
+        $query->where('role_id', $doctorRole->id);
+      })->get();
+    } elseif ($user->hasRole('hospital')) {
+      // Retrieve departments of the hospital
+      $departments = $user->departments;
+
+
+      // Collect all patients of departments under the hospital
+      $patients = collect();
+      $doctors = collect();
+      foreach ($departments as $department) {
+        $departmentDoctors = $department->doctorsdepartment;
+        $doctors = $doctors->merge($departmentDoctors);
+        foreach ($departmentDoctors as $doctor) {
+          $patients = $patients->merge($doctor->patients);
+        }
+      }
+    } elseif ($user->hasRole('department')) {
+      // Retrieve doctors of the department
+      $doctors = $user->doctorsdepartment;
+      // Collect all patients of doctors in the department
+      $patients = $doctors->pluck('patients')->flatten();
+    }
+    return view('content.apps.app-calendar', compact('patients', 'doctors', 'user'));
   }
 
 
   public function getEvents(Request $request)
   {
+    $user = Auth::user();
     // Fetch events from the Reservation model
-    $reservations = Reservation::query();
+    if ($user->hasRole('doctor')) {
+      $reservations = Reservation::query()
+        ->where('doctor_id', '=', $user->id);
+    } elseif ($user->hasRole('hospital')) {
+      // For hospitals, get reservations through departments and doctors
+      $reservations = Reservation::query()
+        ->whereHas('doctor.department.hospital', function ($query) use ($user) {
+          // Filter by hospital_id that the hospital user belongs to
+          $query->where('id', '=', $user->id);
+        });
+    } elseif ($user->hasRole('department')) {
+      // For hospitals, get reservations through departments and doctors
+      $reservations = Reservation::query()
+        ->whereHas('doctor.department', function ($query) use ($user) {
+          // Filter by hospital_id that the hospital user belongs to
+          $query->where('id', '=', $user->id);
+        });
+    } elseif ($user->hasRole('SuperAdmin')) {
+      // For hospitals, get reservations through departments and doctors
+      $reservations = Reservation::query();
+    }
 
     // Check if filters are provided in the request
     if ($request->has('filters')) {
@@ -55,6 +100,15 @@ class Calendar extends Controller
       // Filter reservations based on selected patient IDs
       if (!empty($patientIds)) {
         $reservations->whereIn('patient_id', $patientIds);
+      }
+    }
+    if ($request->has('doctorsIds')) {
+      // Get selected patient IDs
+      $doctorIds = json_decode($request->input('doctorsIds'));
+
+      // Filter reservations based on selected patient IDs
+      if (!empty($doctorIds)) {
+        $reservations->whereIn('doctor_id', $doctorIds);
       }
     }
 
@@ -108,7 +162,7 @@ class Calendar extends Controller
     $reservation->start_datetime = $request->eventStartDate;
     $reservation->end_datetime = $request->eventEndDate;
     $reservation->label = $request->eventLabel;
-    $reservation->doctor_id = $request->eventDoctors;
+    $reservation->doctor_id = Auth::id();
     $reservation->patient_id = $request->eventPatients;
     $reservation->description = $request->eventDescription;
     $reservation->save();
@@ -165,7 +219,7 @@ class Calendar extends Controller
     $reservation->start_datetime = $request->eventStartDate;
     $reservation->end_datetime = $request->eventEndDate;
     $reservation->label = $request->eventLabel;
-    $reservation->doctor_id = $request->eventDoctors;
+    $reservation->doctor_id = Auth::id();
     $reservation->patient_id = $request->eventPatients;
     $reservation->description = $request->eventDescription;
     $reservation->save();

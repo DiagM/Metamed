@@ -26,7 +26,8 @@ class PatientManagement extends Controller
       $filterdoctors = $user;
     } elseif ($user->hasRole('hospital')) {
       // Retrieve departments of the hospital
-      $departments = $user->departments;
+      $departments = $user->departments()->with('doctorsdepartment')->get();
+
 
       // Collect all patients of departments under the hospital
       $patients = collect();
@@ -58,7 +59,7 @@ class PatientManagement extends Controller
       $hospitalRole = Role::findByName('hospital');
       $departments = User::whereHas('roles', function ($query) use ($hospitalRole) {
         $query->where('role_id', $hospitalRole->id);
-      })->get();
+      })->with('departments.doctorsdepartment')->get();
     } else {
       // Handle other cases or defaults as per your application logic
       $patients = collect();
@@ -124,7 +125,7 @@ class PatientManagement extends Controller
     if ($user->hasRole('doctor')) {
       // Retrieve patients related to the authenticated doctor
       $doctor = $user;
-      $usersQuery = User::whereHas('doctors', function ($query) use ($doctor) {
+      $usersQuery = User::whereHas('doctor', function ($query) use ($doctor) {
         $query->where('doctor_id', $doctor->id);
       });
     } elseif ($user->hasRole('hospital')) {
@@ -180,22 +181,23 @@ class PatientManagement extends Controller
 
     // Apply doctor_name filter if provided
     if ($request->filled('doctor_name')) {
-      $doctorName = $request->input('doctor_name');
-      $usersQuery->whereHas('doctors', function ($query) use ($doctorName) {
-        $query->where('name', 'LIKE', "%{$doctorName}%");
+      $doctorId = $request->input('doctor_name');
+      $usersQuery->whereHas('doctors', function ($query) use ($doctorId) {
+        $query->where('doctor_id', $doctorId);
       });
     }
+
     // Apply department_name filter if provided
     if ($request->filled('department_name')) {
       $departmentName = $request->input('department_name');
       $usersQuery->whereHas('doctors.department', function ($query) use ($departmentName) {
-        $query->where('name', 'LIKE', "%{$departmentName}%");
+        $query->where('id', 'LIKE', "%{$departmentName}%");
       });
     }
     if ($request->filled('hospital_name')) {
       $departmentName = $request->input('hospital_name');
       $usersQuery->whereHas('doctors.department.hospital', function ($query) use ($departmentName) {
-        $query->where('name', 'LIKE', "%{$departmentName}%");
+        $query->where('id', 'LIKE', "%{$departmentName}%");
       });
     }
 
@@ -283,28 +285,29 @@ class PatientManagement extends Controller
         return response()->json(['message' => "Email already exists"], 422);
       }
 
-      // Update or create user
-      $user = User::updateOrCreate(
-        ['id' => $userID],
-        [
-          'name' => $request->name,
-          'email' => $request->email,
-          'contact' => $request->userContact,
-          'license_number' => $request->license_number,
-          'date_of_birth' => $request->date_of_birth,
-          'gender' => $request->gender,
-          'address' => $request->address,
-          'height' => $request->height,
-          'weight' => $request->weight,
-          'blood_type' => $request->blood_type,
-          'medical_notes' => $request->medical_notes,
-          'allergies' => $request->allergies,
 
-        ]
-      );
 
       // If the user is newly created, attach them to the doctor
       if (!$userID) {
+        //  create user
+        $user = User::updateOrCreate(
+          ['id' => $userID],
+          [
+            'name' => $request->name,
+            'email' => $request->email,
+            'contact' => $request->userContact,
+            'license_number' => $request->license_number,
+            'date_of_birth' => $request->date_of_birth,
+            'gender' => $request->gender,
+            'address' => $request->address,
+            'height' => $request->height,
+            'weight' => $request->weight,
+            'blood_type' => $request->blood_type,
+            'medical_notes' => $request->medical_notes,
+            'allergies' => $request->allergies,
+            bcrypt(Str::random(10))
+          ]
+        );
         $doctor->patients()->attach($user);
         $user->assignRole('patient');
 
@@ -316,6 +319,25 @@ class PatientManagement extends Controller
         );
 
         SendEmailJob::dispatch($token, $user->email);
+      } else {
+        // Update the user
+        $user = User::updateOrCreate(
+          ['id' => $userID],
+          [
+            'name' => $request->name,
+            'email' => $request->email,
+            'contact' => $request->userContact,
+            'license_number' => $request->license_number,
+            'date_of_birth' => $request->date_of_birth,
+            'gender' => $request->gender,
+            'address' => $request->address,
+            'height' => $request->height,
+            'weight' => $request->weight,
+            'blood_type' => $request->blood_type,
+            'medical_notes' => $request->medical_notes,
+            'allergies' => $request->allergies,
+          ]
+        );
       }
 
       return response()->json($userID ? 'Updated' : 'Created');

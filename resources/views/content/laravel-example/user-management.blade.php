@@ -14,7 +14,7 @@
 
 <!-- Page Scripts -->
 @section('page-script')
-    @vite(['resources/js/laravel-user-management.js'])
+    @vite(['resources/js/laravel-user-management.js', 'resources/assets/js/forms-selects.js'])
 @endsection
 
 @section('content')
@@ -25,12 +25,12 @@
                 <div class="card-body">
                     <div class="d-flex align-items-start justify-content-between">
                         <div class="content-left">
-                            <span>Users</span>
+                            <span>Doctors</span>
                             <div class="d-flex align-items-end mt-2">
-                                <h3 class="mb-0 me-2">{{ $totalUser }}</h3>
+                                <h3 class="mb-0 me-2">{{ $totalDoctors }}</h3>
                                 <small class="text-success">(100%)</small>
                             </div>
-                            <small>Total Users</small>
+                            <small>Total Doctors</small>
                         </div>
                         <span class="badge bg-label-primary rounded p-2">
                             <i class="ti ti-user ti-sm"></i>
@@ -44,15 +44,17 @@
                 <div class="card-body">
                     <div class="d-flex align-items-start justify-content-between">
                         <div class="content-left">
-                            <span>Verified Users</span>
+                            <span>Most reservations</span>
                             <div class="d-flex align-items-end mt-2">
-                                <h3 class="mb-0 me-2">{{ $verified }}</h3>
-                                <small class="text-success">(+95%)</small>
+                                @if ($mostReservationsDoctor)
+                                    <h3 class="mb-0 me-2">{{ $mostReservationsDoctor->name }}</h3>
+                                @endif
+                                <small class="text-success">({{ $mostReservationsCount }})</small>
                             </div>
-                            <small>Recent analytics </small>
+                            <small>Total Reservations</small>
                         </div>
                         <span class="badge bg-label-success rounded p-2">
-                            <i class="ti ti-user-check ti-sm"></i>
+                            <i class="fa-solid fa-arrow-up fa-2x"></i>
                         </span>
                     </div>
                 </div>
@@ -63,28 +65,30 @@
                 <div class="card-body">
                     <div class="d-flex align-items-start justify-content-between">
                         <div class="content-left">
-                            <span>Duplicate Users</span>
+                            <span>Least reservations</span>
                             <div class="d-flex align-items-end mt-2">
-                                <h3 class="mb-0 me-2">{{ $userDuplicates }}</h3>
-                                <small class="text-success">(0%)</small>
+                                @if ($leastReservationsDoctor)
+                                    <h3 class="mb-0 me-2">{{ $leastReservationsDoctor->name }}</h3>
+                                @endif
+                                <small class="text-danger">({{ $leastReservationsCount }})</small>
                             </div>
-                            <small>Recent analytics</small>
+                            <small>Total Reservations</small>
                         </div>
                         <span class="badge bg-label-danger rounded p-2">
-                            <i class="ti ti-users ti-sm"></i>
+                            <i class="fa-solid fa-arrow-down fa-2x"></i>
                         </span>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-sm-6 col-xl-3">
+        {{-- <div class="col-sm-6 col-xl-3">
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex align-items-start justify-content-between">
                         <div class="content-left">
                             <span>Verification Pending</span>
                             <div class="d-flex align-items-end mt-2">
-                                <h3 class="mb-0 me-2">{{ $notVerified }}</h3>
+                                <h3 class="mb-0 me-2"></h3>
                                 <small class="text-danger">(+6%)</small>
                             </div>
                             <small>Recent analytics</small>
@@ -95,26 +99,34 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> --}}
     </div>
     <!-- Users List Table -->
     <div class="card">
         <div class="card-header">
             <h5 class="card-title mb-0">Search Filter</h5>
-            <div class="mb-3">
-                <label for="filter-department" class="form-label">Filter by Department:</label>
-                <select id="filter-department" class="form-select" style="width: 200px">
-                    <option value="">All Departments</option>
-                    <option value="Cardiology">Cardiology</option>
-                    <option value="Orthopedics">Orthopedics</option>
-                    <option value="Gynecology">Gynecology</option>
-                    <option value="Pediatrics">Pediatrics</option>
-                    <option value="Neurology">Neurology</option>
-                    <option value="Ophthalmology">Ophthalmology</option>
-                    <option value="Oncology">Oncology</option>
-                    <option value="Dermatology">Dermatology</option>
-                </select>
-            </div>
+            @hasanyrole('hospital')
+                <div class="col-md-6 mb-3" style="width: 200px">
+                    <label for="filter-department-name" class="form-label">Filter by Department Name:</label>
+                    <select id="filter-department-name" class="select2 form-select form-select-lg" data-allow-clear="true">
+                        <option value="">All departments</option>
+                        @foreach ($departments as $department)
+                            <option value="{{ $department->id }}">{{ $department->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endhasanyrole
+            @hasrole('SuperAdmin')
+                <div class="col-md-6 mb-3" style="width: 200px">
+                    <label for="filter-hospital-name" class="form-label">Filter by hospital Name:</label>
+                    <select id="filter-hospital-name" class="select2 form-select form-select-lg" data-allow-clear="true">
+                        <option value="">All hospitals</option>
+                        @foreach ($hospitals as $hospital)
+                            <option value="{{ $hospital->id }}">{{ $hospital->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endrole
         </div>
 
 
@@ -162,7 +174,7 @@
                         <input type="text" id="add-user-license_number" name="license_number" class="form-control"
                             placeholder="AD576" aria-label="jdoe1" />
                     </div>
-                    <div class="mb-3">
+                    {{-- <div class="mb-3">
                         <label class="form-label" for="department">Department</label>
                         <select id="department" class="select2 form-select" name="department">
                             <option value="" selected disabled>Select Department</option>
@@ -175,7 +187,7 @@
                             <option value="Oncology">Oncology</option>
                             <option value="Dermatology">Dermatology</option>
                         </select>
-                    </div>
+                    </div> --}}
 
 
                     <button type="submit" class="btn btn-primary me-sm-3 me-1 data-submit">Submit</button>

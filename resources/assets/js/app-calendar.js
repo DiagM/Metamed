@@ -89,36 +89,36 @@ $('.select-filter-patients').select2({
     }
 
     // Event doctors (select2)
-    if (eventdoctors.length) {
-      // function renderGuestAvatar(option) {
-      //   if (!option.id) {
-      //     return option.text;
-      //   }
-      //   var $avatar =
-      //     "<div class='d-flex flex-wrap align-items-center'>" +
-      //     "<div class='avatar avatar-xs me-2'>" +
-      //     "<img src='" +
-      //     assetsPath +
-      //     'img/avatars/' +
-      //     $(option.element).data('avatar') +
-      //     "' alt='avatar' class='rounded-circle' />" +
-      //     '</div>' +
-      //     option.text +
-      //     '</div>';
+    // if (eventdoctors.length) {
+    //   // function renderGuestAvatar(option) {
+    //   //   if (!option.id) {
+    //   //     return option.text;
+    //   //   }
+    //   //   var $avatar =
+    //   //     "<div class='d-flex flex-wrap align-items-center'>" +
+    //   //     "<div class='avatar avatar-xs me-2'>" +
+    //   //     "<img src='" +
+    //   //     assetsPath +
+    //   //     'img/avatars/' +
+    //   //     $(option.element).data('avatar') +
+    //   //     "' alt='avatar' class='rounded-circle' />" +
+    //   //     '</div>' +
+    //   //     option.text +
+    //   //     '</div>';
 
-      //   return $avatar;
-      // }
-      eventdoctors.wrap('<div class="position-relative"></div>').select2({
-         placeholder: 'Select value',
-        dropdownParent: eventdoctors.parent(),
-        closeOnSelect: false,
-        // templateResult: renderGuestAvatar,
-        // templateSelection: renderGuestAvatar,
-        escapeMarkup: function (es) {
-          return es;
-        }
-      });
-    }
+    //   //   return $avatar;
+    //   // }
+    //   eventdoctors.wrap('<div class="position-relative"></div>').select2({
+    //      placeholder: 'Select value',
+    //     dropdownParent: eventdoctors.parent(),
+    //     closeOnSelect: false,
+    //     // templateResult: renderGuestAvatar,
+    //     // templateSelection: renderGuestAvatar,
+    //     escapeMarkup: function (es) {
+    //       return es;
+    //     }
+    //   });
+    // }
     if (eventpatients.length) {
 
       eventpatients.wrap('<div class="position-relative"></div>').select2({
@@ -244,6 +244,13 @@ $('.select-filter-patients').select2({
       // Refetch events with selected patient IDs
       calendar.refetchEvents();
     });
+    $('#filterDoctors').on('change', function() {
+      // Get selected patient IDs
+      var selectedPatients = $(this).val();
+
+      // Refetch events with selected patient IDs
+      calendar.refetchEvents();
+    });
 
     // --------------------------------------------------------------------------------------------------
     // AXIOS: fetchEvents
@@ -253,14 +260,18 @@ $('.select-filter-patients').select2({
       // Get selected filters and patient IDs
       let selectedFilters = selectedCalendars();
       let selectedPatients = $('#filterPatients').val();
+      let selectedDoctors = $('#filterDoctors').val();
 
       // If selectedFilters or selectedPatients is empty, return an empty array
       if (selectedFilters.length === 0 || !selectedPatients) {
         return successCallback([]);
       }
+      if (selectedFilters.length === 0 || !selectedDoctors) {
+        return successCallback([]);
+      }
 
       // Fetch events from the API endpoint based on selected filters and patient IDs
-      fetch('/calendar/events?filters=' + JSON.stringify(selectedFilters) + '&patientIds=' + JSON.stringify(selectedPatients))
+      fetch('/calendar/events?filters=' + JSON.stringify(selectedFilters) + '&patientIds=' + JSON.stringify(selectedPatients) +'&doctorsIds=' + JSON.stringify(selectedDoctors) )
         .then(response => {
           if (!response.ok) {
             throw new Error('Network response was not ok');
@@ -750,7 +761,8 @@ $('.select-filter-patients').select2({
       eventTitle.value = '';
       // eventLocation.value = '';
       // allDaySwitch.checked = false;
-      eventdoctors.val('').trigger('change');
+       eventdoctors.val(userId).trigger('change');
+      eventpatients.val('').trigger('change');
       eventDescription.value = '';
           // Reset error messages
     $('.error-message').text(''); // Clear the text content of all error message spans
