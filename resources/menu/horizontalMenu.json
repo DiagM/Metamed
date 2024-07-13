@@ -367,7 +367,7 @@
           ]
         },
         {
-          "name": "Laravel Example",
+          "name": "Management",
           "icon": "menu-icon tf-icons ti ti-brand-php",
           "slug": "laravel-example",
           "submenu": [

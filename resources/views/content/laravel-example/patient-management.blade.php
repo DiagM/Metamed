@@ -250,7 +250,19 @@
                         <label class="form-label" for="add-user-allergies">Allergies and reactions</label>
                         <textarea id="add-user-allergies" name="allergies" class="form-control" rows="3"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary me-sm-3 me-1 data-submit">Submit</button>
+                    <div class="mb-3 select2-primary">
+                        <label class="form-label" for="add-user-diseases">Select diseases</label>
+                        <select class="select2 form-select form-select-lg" data-allow-clear="true" id="add-user-diseases"
+                            name="diseases[]" multiple>
+                            @foreach ($diseases as $disease)
+                                <option value="{{ $disease->id }}">{{ $disease->name }}</option>
+                            @endforeach
+                        </select>
+
+                    </div>
+                    @hasanyrole('SuperAdmin|doctor')
+                        <button type="submit" class="btn btn-primary me-sm-3 me-1 data-submit">Submit</button>
+                    @endhasanyrole
                     <button type="reset" class="btn btn-label-secondary" data-bs-dismiss="offcanvas">Cancel</button>
                 </form>
             </div>
@@ -258,47 +270,48 @@
 
 
     </div>
-    <script>
-        $(document).ready(function() {
-            // Attach change event listener to hospital filter
-            const doctorSelect = document.getElementById('filter-doctor-name');
-            const hospitals = @json($departments);
+    @hasrole('hospital')
+        <script>
+            $(document).ready(function() {
+                // Attach change event listener to hospital filter
+                const doctorSelect = document.getElementById('filter-doctor-name');
+                const hospitals = @json($departments);
 
-            $('#filter-department-name').change(function() {
-                const hospitalId = this.value;
+                $('#filter-department-name').change(function() {
+                    const hospitalId = this.value;
 
-                // Clear current doctor options
-                doctorSelect.innerHTML = '<option value="">All doctors</option>';
+                    // Clear current doctor options
+                    doctorSelect.innerHTML = '<option value="">All doctors</option>';
 
-                if (hospitalId) {
+                    if (hospitalId) {
 
-                    const selectedHospital = hospitals.find(hospital => hospital.id == hospitalId);
-                    selectedHospital.doctorsdepartment.forEach(doctor => {
-                        let option = document.createElement('option');
-                        option.value = doctor.id;
-                        option.textContent = doctor.name;
-                        doctorSelect.appendChild(option);
-                    });
-                } else {
-                    // If no hospital is selected, show all doctors
-                    @foreach ($filterdoctors as $doctor)
-                        {
+                        const selectedHospital = hospitals.find(hospital => hospital.id == hospitalId);
+                        selectedHospital.doctorsdepartment.forEach(doctor => {
                             let option = document.createElement('option');
-                            option.value = '{{ $doctor->id }}';
-                            option.textContent = '{{ $doctor->name }}';
+                            option.value = doctor.id;
+                            option.textContent = doctor.name;
                             doctorSelect.appendChild(option);
+                        });
+                    } else {
+                        // If no hospital is selected, show all doctors
+                        @foreach ($filterdoctors as $doctor)
+                            {
+                                let option = document.createElement('option');
+                                option.value = '{{ $doctor->id }}';
+                                option.textContent = '{{ $doctor->name }}';
+                                doctorSelect.appendChild(option);
 
-                        }
-                    @endforeach
-                }
+                            }
+                        @endforeach
+                    }
+                });
+
+                // Ensure the filters are being properly applied
+                $('#filter-hospital-name').trigger('change');
             });
+        </script>
 
-            // Ensure the filters are being properly applied
-            $('#filter-hospital-name').trigger('change');
-        });
-    </script>
-
-
+    @endhasrole
     @hasrole('SuperAdmin')
         <script>
             $(document).ready(function() {

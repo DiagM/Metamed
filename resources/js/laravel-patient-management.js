@@ -467,6 +467,18 @@ $(document).on('click', '.edit-record', function() {
     $('#add-user-blood_type').val(data.blood_type);
     $('#add-user-medical_notes').val(data.medical_notes);
     $('#add-user-allergies').val(data.allergies);
+    // Populate the diseases select box
+    let diseaseSelect = $('#add-user-diseases');
+    diseaseSelect.val(null).trigger('change');
+    if (data.diseases) {
+        let userDiseases = data.diseases.map(disease => disease.id);
+        userDiseases.forEach(function(diseaseId) {
+            if (!diseaseSelect.find(`option[value='${diseaseId}']`).is(':selected')) {
+                diseaseSelect.find(`option[value='${diseaseId}']`).prop('selected', true);
+            }
+        });
+        diseaseSelect.trigger('change'); // Trigger change event to update the UI
+    }
   });
 });
 
@@ -475,8 +487,10 @@ $(document).on('click', '.edit-record', function() {
   $('.add-new').on('click', function () {
     $('#user_id').val(''); //reseting input field
     $('#offcanvasAddUserLabel').html('Add Patient');
-    $('#department').val("");
-  });
+    let diseaseSelect = $('#add-user-diseases');
+    diseaseSelect.val(null).trigger('change');
+
+    });
 
   // Filter form control to default size
   // ? setTimeout used for multilingual table initialization

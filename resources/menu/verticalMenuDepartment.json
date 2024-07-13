@@ -12,16 +12,6 @@
       "slug": "laravel-example",
       "submenu": [
         {
-          "url": "laravel/hospital-management",
-          "name": "Hospital Management",
-          "slug": "laravel-example-hospital-management"
-        },
-        {
-          "url": "laravel/department-management",
-          "name": "Department Management",
-          "slug": "laravel-example-department-management"
-        },
-        {
           "url": "laravel/user-management",
           "name": "Doctor Management",
           "slug": "laravel-example-user-management"

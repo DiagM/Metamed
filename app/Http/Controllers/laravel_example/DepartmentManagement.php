@@ -16,28 +16,51 @@ class DepartmentManagement extends Controller
 {
   public function departmentManagement()
   {
-    // Get the "department" role
     $departmentRole = Role::findByName('department');
+    $user = Auth::user();
 
+    // Retrieve departments based on the user's role
+    if ($user->hasRole('hospital')) {
+      $departments = User::whereHas('roles', function ($query) use ($departmentRole) {
+        $query->where('role_id', $departmentRole->id);
+      })->where('hospital_id', $user->id)->get();
+    } elseif ($user->hasRole('SuperAdmin')) {
+      $departments = User::whereHas('roles', function ($query) use ($departmentRole) {
+        $query->where('role_id', $departmentRole->id);
+      })->get();
+    } else {
+      $departments = collect(); // Return an empty collection if the user doesn't have the appropriate role
+    }
 
-    // Retrieve users with the "department" role
-    $users = User::whereHas('roles', function ($query) use ($departmentRole) {
-      $query->where('role_id', $departmentRole->id);
-    })->where('hospital_id', Auth::id())->get();
+    $userCount = $departments->count();
 
-    $userCount = $users->count();
-    $verified = User::whereNotNull('email_verified_at')->get()->count();
-    $notVerified = User::whereNull('email_verified_at')->get()->count();
-    $usersUnique = $users->unique(['email']);
-    $userDuplicates = $users->diff($usersUnique)->count();
+    // Calculate the number of doctors for each department
+    $departmentsWithDoctorCount = $departments->map(function ($department) {
+      $department->doctor_count = $department->doctorsdepartment()->count();
+      return $department;
+    });
+
+    // Find the department with the most doctors
+    $mostDoctorsDepartment = $departmentsWithDoctorCount->sortByDesc('doctor_count')->first();
+
+    // Find the department with the least doctors
+    $leastDoctorsDepartment = $departmentsWithDoctorCount->sortBy('doctor_count')->first();
+
+    // Get the count of doctors for the department with the most doctors
+    $mostDoctorsDepartmentCount = $mostDoctorsDepartment ? $mostDoctorsDepartment->doctor_count : 0;
+    $leastDoctorsDepartmentCount = $leastDoctorsDepartment ? $leastDoctorsDepartment->doctor_count : 0;
 
     return view('content.laravel-example.department-management', [
       'totalUser' => $userCount,
-      'verified' => $verified,
-      'notVerified' => $notVerified,
-      'userDuplicates' => $userDuplicates,
+      'mostDoctorsDepartment' => $mostDoctorsDepartment,
+      'mostDoctorsDepartmentCount' => $mostDoctorsDepartmentCount,
+      'leastDoctorsDepartment' => $leastDoctorsDepartment,
+      'leastDoctorsDepartmentCount' => $leastDoctorsDepartmentCount,
     ]);
   }
+
+
+
   /**
    * Display a listing of the resource.
    */

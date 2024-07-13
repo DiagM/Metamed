@@ -144,4 +144,20 @@ class User extends Authenticatable implements CanResetPassword, MessengerProvide
   {
     return $this->morphMany(ExpoToken::class, 'owner');
   }
+
+  //holiday relation
+  public function doctorsholiday()
+  {
+    return $this->hasMany(Holiday::class, 'doctor_id');
+  }
+
+  public function departmentsholiday()
+  {
+    return $this->hasMany(Holiday::class, 'department_id');
+  }
+  //patient belongs to disease
+  public function diseases()
+  {
+    return $this->belongsToMany(Disease::class, 'disease_user', 'patient_id', 'disease_id');
+  }
 }

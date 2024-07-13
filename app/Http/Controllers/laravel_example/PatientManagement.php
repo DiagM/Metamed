@@ -4,6 +4,8 @@ namespace App\Http\Controllers\laravel_example;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\SendEmailJob;
+use App\Models\Disease;
+use App\Models\diseases;
 use App\Models\MedicalFile;
 use App\Models\Reservation;
 use App\Models\User;
@@ -77,6 +79,8 @@ class PatientManagement extends Controller
     $mostCommonBloodType = $bloodTypeCounts->sortDesc()->keys()->first();
     $mostCommonBloodTypeCount = $bloodTypeCounts->get($mostCommonBloodType);
 
+    //disease
+    $diseases = Disease::all();
     // Assuming $user is the authenticated user object
     if ($user->hasRole('hospital') || $user->hasRole('SuperAdmin')) {      // User has the role 'hospital', so include departments
       return view('content.laravel-example.patient-management', [
@@ -88,6 +92,7 @@ class PatientManagement extends Controller
         'filterdoctors' => $filterdoctors,
         'user' => $user,
         'departments' => $departments,
+        'diseases' => $diseases,
       ]);
     } else {
       // User does not have the role 'hospital', do not include departments
@@ -99,7 +104,7 @@ class PatientManagement extends Controller
         'mostCommonBloodTypeCount' => $mostCommonBloodTypeCount,
         'filterdoctors' => $filterdoctors,
         'user' => $user,
-        // No departments included
+        'diseases' => $diseases,
       ]);
     }
   }
@@ -125,7 +130,7 @@ class PatientManagement extends Controller
     if ($user->hasRole('doctor')) {
       // Retrieve patients related to the authenticated doctor
       $doctor = $user;
-      $usersQuery = User::whereHas('doctor', function ($query) use ($doctor) {
+      $usersQuery = User::whereHas('doctors', function ($query) use ($doctor) {
         $query->where('doctor_id', $doctor->id);
       });
     } elseif ($user->hasRole('hospital')) {
@@ -305,7 +310,7 @@ class PatientManagement extends Controller
             'blood_type' => $request->blood_type,
             'medical_notes' => $request->medical_notes,
             'allergies' => $request->allergies,
-            bcrypt(Str::random(10))
+            'password' => bcrypt(Str::random(10))
           ]
         );
         $doctor->patients()->attach($user);
@@ -339,7 +344,10 @@ class PatientManagement extends Controller
           ]
         );
       }
-
+      // Attach diseases if present in the request
+      if ($request->has('diseases')) {
+        $user->diseases()->sync($request->diseases);
+      }
       return response()->json($userID ? 'Updated' : 'Created');
     }
   }
@@ -352,7 +360,7 @@ class PatientManagement extends Controller
   public function show(string $id)
   {
     $where = ['id' => $id];
-    $user = User::where($where)->first();
+    $user = User::with('diseases')->where($where)->first();
     $totalMedicalFiles = MedicalFile::where('patient_id', $id)->count();
     $totalVisits = Reservation::where('patient_id', $id)->where('doctor_id', auth()->id())->count();
     $reservations = Reservation::where('patient_id', $id)->where('doctor_id', auth()->id())->get();
@@ -371,12 +379,10 @@ class PatientManagement extends Controller
    */
   public function edit($id)
   {
-    $where = ['id' => $id];
-
-    $users = User::where($where)->first();
-
-    return response()->json($users);
+    $user = User::with('diseases')->find($id);
+    return response()->json($user);
   }
+
 
   /**
    * Update the specified resource in storage.
@@ -402,7 +408,7 @@ class PatientManagement extends Controller
   public function patientfiles(Request $request)
   {
     $user = $request->user();
-    $medicalFiles = $user->medicalFiles()->get()->map(function ($file) {
+    $medicalFiles = $user->medicalFiles()->with('doctor')->get()->map(function ($file) {
       $filePath = $file->file_path;
 
       // Extract file name
@@ -416,6 +422,18 @@ class PatientManagement extends Controller
         'description' => $file->description,
         'date' => $file->created_at->format('Y-m-d H:i'),
         'file_name' => $fileName,
+        'doctor' => $file->doctor ? [
+          'id' => $file->doctor->id,
+          'name' => $file->doctor->name,
+          'department' => $file->doctor->department ? [
+            'id' => $file->doctor->department->id,
+            'name' => $file->doctor->department->name,
+            'hospital' => $file->doctor->department->hospital ? [
+              'id' => $file->doctor->department->hospital->id,
+              'name' => $file->doctor->department->hospital->name,
+            ] : null,
+          ] : null,
+        ] : null,
       ];
     });
 

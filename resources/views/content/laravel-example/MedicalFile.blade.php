@@ -50,7 +50,7 @@
     </style>
 
     <!-- Activity Timeline -->
-    <div class="card mb-4">
+    {{-- <div class="card mb-4">
         <h5 class="card-header">User Activity Timeline</h5>
         <div class="card-body pb-0">
             <ul id="timeline" class="timeline mb-0">
@@ -98,7 +98,7 @@
                 @endforelse
             </ul>
         </div>
-    </div>
+    </div> --}}
     <!-- /Activity Timeline -->
 
     <h4 class="py-3 mb-4">
@@ -182,14 +182,16 @@
                                 <span>{{ $user->address }}</span>
                             </li>
                         </ul>
-                        <div class="d-flex justify-content-center">
-                            <a href="javascript:;" class="btn btn-primary me-3" data-bs-target="#editUser"
-                                data-bs-toggle="modal">Edit</a>
-                            {{-- <a href="javascript:;" class="btn btn-info suspend-user"data-bs-target="#editPrescription"
+                        @hasanyrole('SuperAdmin|doctor')
+                            <div class="d-flex justify-content-center">
+                                <a href="javascript:;" class="btn btn-primary me-3" data-bs-target="#editUser"
+                                    data-bs-toggle="modal">Edit</a>
+                                {{-- <a href="javascript:;" class="btn btn-info suspend-user"data-bs-target="#editPrescription"
                                 data-bs-toggle="modal">prescription</a> --}}
-                            <a href="javascript:;" class="btn btn-info "data-bs-target="#editPrescription"
-                                data-bs-toggle="modal">prescription</a>
-                        </div>
+                                <a href="javascript:;" class="btn btn-info "data-bs-target="#editPrescription"
+                                    data-bs-toggle="modal">prescription</a>
+                            </div>
+                        @endhasanyrole
                     </div>
                 </div>
             </div>
@@ -212,6 +214,12 @@
                                 <span class="fw-medium me-1">Allergies:</span>
                                 <span>{{ $user->allergies }}</span>
                             </li>
+                            @foreach ($user->diseases as $disease)
+                                <li class="pt-1">
+                                    <span class="fw-medium me-1">{{ $disease->name }}:</span>
+                                    <span> yes</span>
+                                </li>
+                            @endforeach
                         </ul>
                     </div>
                 </div>
@@ -408,7 +416,9 @@
                     <input type="file" id="add-medical-file" name="medical_file" class="form-control"
                         aria-label="Upload File" />
                 </div>
-                <button type="submit" class="btn btn-primary me-sm-3 me-1 data-submit">Submit</button>
+                @hasanyrole('SuperAdmin|doctor')
+                    <button type="submit" class="btn btn-primary me-sm-3 me-1 data-submit">Submit</button>
+                @endhasanyrole
                 <button type="reset" class="btn btn-label-secondary" data-bs-dismiss="offcanvas">Cancel</button>
             </form>
         </div>

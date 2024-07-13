@@ -50,6 +50,9 @@ class Calendar extends Controller
       $doctors = $user->doctorsdepartment;
       // Collect all patients of doctors in the department
       $patients = $doctors->pluck('patients')->flatten();
+    } elseif (($user->hasRole('doctor'))) {
+      $patients = $user->patients;
+      $doctors = collect();
     }
     return view('content.apps.app-calendar', compact('patients', 'doctors', 'user'));
   }
@@ -241,12 +244,23 @@ class Calendar extends Controller
   }
   public function destroy($id)
   {
+    $reservation = Reservation::where('id', $id)->first();
+    $patient = $reservation->patient;
 
+    if ($patient && $patient->expoTokens()->exists()) {
+      $title = 'Reservation Cancel';
+      $body = 'Your reservation ' . $reservation->name . '  of date ' . $reservation->start_datetime . 'at the doctor' . $reservation->doctor->name . 'has been canceled.';
+      Notification::send($patient, new ReservationReminderNotification($title, $body));
+    }
     Reservation::where('id', $id)->delete();
   }
   public function indexmobile()
   {
-    $reservations = Reservation::with('doctor', 'patient')->get();
+    $userId = Auth::id();
+    $reservations = Reservation::with(['doctor.department.hospital', 'patient'])
+      ->where('patient_id', $userId)
+      ->orderBy('start_datetime', 'desc')
+      ->get();
     return response()->json($reservations);
   }
 }

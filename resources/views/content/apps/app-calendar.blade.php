@@ -55,18 +55,16 @@
                         </select>
 
                     </div>
-                    @hasanyrole('department|hospital|SuperAdmin')
-                        <div class="mb-3 select2-primary">
-                            <label class="form-label" for="filterDoctors">Select doctors</label>
-                            <select class="select2 form-select form-select-lg" data-allow-clear="true" id="filterDoctors"
-                                name="filterDoctors[]" multiple>
-                                @foreach ($doctors as $doctor)
-                                    <option value="{{ $doctor->id }}">{{ $doctor->name }}</option>
-                                @endforeach
-                            </select>
+                    <div class="mb-3 select2-primary">
+                        <label class="form-label" for="filterDoctors">Select doctors</label>
+                        <select class="select2 form-select form-select-lg" data-allow-clear="true" id="filterDoctors"
+                            name="filterDoctors[]" multiple>
+                            @foreach ($doctors as $doctor)
+                                <option value="{{ $doctor->id }}">{{ $doctor->name }}</option>
+                            @endforeach
+                        </select>
 
-                        </div>
-                    @endhasanyrole
+                    </div>
 
 
                     <div class="form-check mb-2 ms-3">
@@ -219,6 +217,7 @@
                             </div>
                             <div class="mb-3 d-flex justify-content-sm-between justify-content-start my-4">
                                 <div>
+
                                     <button type="submit" class="btn btn-primary btn-add-event me-sm-3 me-1">Add</button>
                                     <button type="reset" class="btn btn-label-secondary btn-cancel me-sm-0 me-1"
                                         data-bs-dismiss="offcanvas">Cancel</button>

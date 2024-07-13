@@ -446,145 +446,178 @@ $('.select-filter-patients').select2({
       });
     }
 
-    // Add Event
-    // ------------------------------------------------
-    function addEvent(eventData) {
-      var formData = new FormData();
-      formData.append('eventTitle', eventData.title);
-      formData.append('eventStartDate', eventData.start);
-      formData.append('eventEndDate', eventData.end);
-      formData.append('eventLabel', eventData.extendedProps.calendar);
-      formData.append('eventDoctors', eventData.extendedProps.doctors);
-      formData.append('eventPatients', eventData.extendedProps.patients);
-      formData.append('eventDescription', eventData.extendedProps.description);
+// Add Event
+// ------------------------------------------------
+function addEvent(eventData) {
+  var formData = new FormData();
+  formData.append('eventTitle', eventData.title);
+  formData.append('eventStartDate', eventData.start);
+  formData.append('eventEndDate', eventData.end);
+  formData.append('eventLabel', eventData.extendedProps.calendar);
+  formData.append('eventDoctors', eventData.extendedProps.doctors);
+  formData.append('eventPatients', eventData.extendedProps.patients);
+  formData.append('eventDescription', eventData.extendedProps.description);
 
-      $.ajax({
-          headers: {
-              'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-          },
-          type: "POST",
-          url: baseUrl + "calendar/add-event",
-          data: formData,
-          dataType: "json",
-          cache: false,
-          contentType: false,
-          processData: false,
-          success: function(response) {
-              // sweetalert
+  $.ajax({
+    headers: {
+      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    },
+    type: "POST",
+    url: baseUrl + "calendar/add-event",
+    data: formData,
+    dataType: "json",
+    cache: false,
+    contentType: false,
+    processData: false,
+    success: function(response) {
+      // Sweetalert
+      Swal.fire({
+        icon: 'success',
+        title: `Successfully ${response.message}!`,
+        text: `Event ${response.message} Successfully.`,
+        customClass: {
+          confirmButton: 'btn btn-success'
+        }
+      });
+      bsAddEventSidebar.hide();
+      calendar.refetchEvents();
+    },
+    error: function(xhr, status, error) {
+      // Handle error response
+      if (xhr.status === 422) {
+        var errors = xhr.responseJSON.errors;
+        // Display errors in the form
+        for (var key in errors) {
+          if (errors.hasOwnProperty(key)) {
+            var errorMessage = errors[key][0]; // Get the first error message for the field
+            // Display or highlight the error message in the form
+            // For example, you can display it next to the corresponding input field
+            $('#' + key).addClass('is-invalid');
+            $('#' + key + '-error').text(errorMessage); // Assuming you have a span with id key-error for error display
+          }
+        }
+
         Swal.fire({
-          icon: 'success',
-          title: `Successfully ${response.message}!`,
-          text: `Event ${response.message} Successfully.`,
+          title: 'Error',
+          text: errorMessage,
+          icon: 'error',
           customClass: {
             confirmButton: 'btn btn-success'
           }
         });
-              bsAddEventSidebar.hide();
-              calendar.refetchEvents();
-
-          },
-          error: function(xhr, status, error) {
-              // Handle error response
-              if (xhr.status === 422) {
-                  var errors = xhr.responseJSON.errors;
-                  // Display errors in the form
-                  for (var key in errors) {
-                      if (errors.hasOwnProperty(key)) {
-                          var errorMessage = errors[key][0]; // Get the first error message for the field
-                          // Display or highlight the error message in the form
-                          // For example, you can display it next to the corresponding input field
-                          $('#' + key).addClass('is-invalid');
-                          $('#' + key + '-error').text(errorMessage); // Assuming you have a span with id key-error for error display
-                      }
-                  }
-
-                  Swal.fire({
-                    title: 'Error',
-                    text: errorMessage,
-                    icon: 'error',
-                    customClass: {
-                      confirmButton: 'btn btn-success'
-                    }
-                  });
-
-              } else {
-                  console.error(xhr.responseText);
-                  // You may want to notify the user about other types of errors
-              }
+      } else if (xhr.status === 403) {
+        Swal.fire({
+          title: 'Forbidden',
+          text: 'You do not have permission to add this event.',
+          icon: 'error',
+          customClass: {
+            confirmButton: 'btn btn-danger'
           }
-      });
-  }
-
-
-
-    // Update Event
-    // ------------------------------------------------
-    function updateEvent(eventData) {
-      eventData.id = parseInt(eventData.id);
-      var formData = new FormData();
-
-      formData.append('eventTitle', eventData.title);
-      formData.append('eventStartDate', eventData.start);
-      formData.append('eventEndDate', eventData.end);
-      formData.append('eventLabel', eventData.extendedProps.calendar);
-      formData.append('eventDoctors', eventData.extendedProps.doctors);
-      formData.append('eventPatients', eventData.extendedProps.patients);
-      formData.append('eventDescription', eventData.extendedProps.description);
-
-      $.ajax({
-          headers: {
-              'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-          },
-          type: "POST", // Change to POST
-          url: baseUrl + "calendar/update-event/" + eventData.id,
-          data: formData,
-          dataType: "json",
-          cache: false,
-          contentType: false,
-          processData: false,
-          success: function(response) {
-              // sweetalert
-              Swal.fire({
-                  icon: 'success',
-                  title: `Successfully ${response.message}!`,
-                  text: `Event ${response.message} Successfully.`,
-                  customClass: {
-                      confirmButton: 'btn btn-success'
-                  }
-              });
-              bsAddEventSidebar.hide();
-              calendar.refetchEvents();
-          },
-          error: function(xhr, status, error) {
-              // Handle error response
-              if (xhr.status === 422) {
-                  var errors = xhr.responseJSON.errors;
-                  // Display errors in the form
-                  for (var key in errors) {
-                      if (errors.hasOwnProperty(key)) {
-                          var errorMessage = errors[key][0]; // Get the first error message for the field
-                          // Display or highlight the error message in the form
-                          // For example, you can display it next to the corresponding input field
-                          $('#' + key).addClass('is-invalid');
-                          $('#' + key + '-error').text(errorMessage); // Assuming you have a span with id key-error for error display
-                      }
-                  }
-
-                  Swal.fire({
-                      title: 'Error',
-                      text: errorMessage,
-                      icon: 'error',
-                      customClass: {
-                          confirmButton: 'btn btn-success'
-                      }
-                  });
-              } else {
-                  console.error(xhr.responseText);
-                  // You may want to notify the user about other types of errors
-              }
+        });
+      } else {
+        console.error(xhr.responseText);
+        // You may want to notify the user about other types of errors
+        Swal.fire({
+          title: 'Error',
+          text: 'An unexpected error occurred.',
+          icon: 'error',
+          customClass: {
+            confirmButton: 'btn btn-danger'
           }
+        });
+      }
+    }
+  });
+}
+
+
+
+// Update Event
+// ------------------------------------------------
+function updateEvent(eventData) {
+  eventData.id = parseInt(eventData.id);
+  var formData = new FormData();
+
+  formData.append('eventTitle', eventData.title);
+  formData.append('eventStartDate', eventData.start);
+  formData.append('eventEndDate', eventData.end);
+  formData.append('eventLabel', eventData.extendedProps.calendar);
+  formData.append('eventDoctors', eventData.extendedProps.doctors);
+  formData.append('eventPatients', eventData.extendedProps.patients);
+  formData.append('eventDescription', eventData.extendedProps.description);
+
+  $.ajax({
+    headers: {
+      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    },
+    type: "POST", // Change to POST
+    url: baseUrl + "calendar/update-event/" + eventData.id,
+    data: formData,
+    dataType: "json",
+    cache: false,
+    contentType: false,
+    processData: false,
+    success: function(response) {
+      // Sweetalert
+      Swal.fire({
+        icon: 'success',
+        title: `Successfully ${response.message}!`,
+        text: `Event ${response.message} Successfully.`,
+        customClass: {
+          confirmButton: 'btn btn-success'
+        }
       });
-  }
+      bsAddEventSidebar.hide();
+      calendar.refetchEvents();
+    },
+    error: function(xhr, status, error) {
+      // Handle error response
+      if (xhr.status === 422) {
+        var errors = xhr.responseJSON.errors;
+        // Display errors in the form
+        for (var key in errors) {
+          if (errors.hasOwnProperty(key)) {
+            var errorMessage = errors[key][0]; // Get the first error message for the field
+            // Display or highlight the error message in the form
+            // For example, you can display it next to the corresponding input field
+            $('#' + key).addClass('is-invalid');
+            $('#' + key + '-error').text(errorMessage); // Assuming you have a span with id key-error for error display
+          }
+        }
+
+        Swal.fire({
+          title: 'Error',
+          text: errorMessage,
+          icon: 'error',
+          customClass: {
+            confirmButton: 'btn btn-success'
+          }
+        });
+      } else if (xhr.status === 403) {
+        Swal.fire({
+          title: 'Forbidden',
+          text: 'You do not have permission to update this event.',
+          icon: 'error',
+          customClass: {
+            confirmButton: 'btn btn-danger'
+          }
+        });
+      } else {
+        console.error(xhr.responseText);
+        // You may want to notify the user about other types of errors
+        Swal.fire({
+          title: 'Error',
+          text: 'An unexpected error occurred.',
+          icon: 'error',
+          customClass: {
+            confirmButton: 'btn btn-danger'
+          }
+        });
+      }
+    }
+  });
+}
+
 
 
     // Remove Event
@@ -696,60 +729,70 @@ $('.select-filter-patients').select2({
       }
     });
 
-    // Call removeEvent function
     btnDeleteEvent.addEventListener('click', e => {
       var id = parseInt(eventToUpdate.id);
       // sweetalert for confirmation of delete
-    Swal.fire({
-      title: 'Are you sure?',
-      text: "You won't be able to revert this!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Yes, delete it!',
-      customClass: {
-        confirmButton: 'btn btn-primary me-3',
-        cancelButton: 'btn btn-label-secondary'
-      },
-      buttonsStyling: false
-    }).then(function (result) {
-      if (result.value) {
-        // delete the data
-        $.ajax({
-          headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+      Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete it!',
+        customClass: {
+          confirmButton: 'btn btn-primary me-3',
+          cancelButton: 'btn btn-label-secondary'
         },
-          type: 'DELETE',
-          url: `${baseUrl}calendar/${id}`,
-          success: function () {
-            dt_user.draw();
-          },
-          error: function (error) {
-            console.log(error);
-          }
-        });
-
-        // success sweetalert
-        Swal.fire({
-          icon: 'success',
-          title: 'Deleted!',
-          text: 'The event has been deleted!',
-          customClass: {
-            confirmButton: 'btn btn-success'
-          }
-        });
-        bsAddEventSidebar.hide();
-        calendar.refetchEvents();
-      } else if (result.dismiss === Swal.DismissReason.cancel) {
-        Swal.fire({
-          title: 'Cancelled',
-          text: 'The event is not deleted!',
-          icon: 'error',
-          customClass: {
-            confirmButton: 'btn btn-success'
-          }
-        });
-      }
-    });
+        buttonsStyling: false
+      }).then(function (result) {
+        if (result.value) {
+          // delete the data
+          $.ajax({
+            headers: {
+              'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            type: 'DELETE',
+            url: `${baseUrl}calendar/${id}`,
+            success: function () {
+              bsAddEventSidebar.hide();
+              calendar.refetchEvents();
+              // success sweetalert
+              Swal.fire({
+                icon: 'success',
+                title: 'Deleted!',
+                text: 'The event has been deleted!',
+                customClass: {
+                  confirmButton: 'btn btn-success'
+                }
+              });
+              bsAddEventSidebar.hide();
+              calendar.refetchEvents();
+            },
+            error: function (error) {
+              if (error.status === 403) {
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Forbidden',
+                  text: 'You do not have permission to delete this event.',
+                  customClass: {
+                    confirmButton: 'btn btn-danger'
+                  }
+                });
+              } else {
+                console.log(error);
+              }
+            }
+          });
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+          Swal.fire({
+            title: 'Cancelled',
+            text: 'The event is not deleted!',
+            icon: 'error',
+            customClass: {
+              confirmButton: 'btn btn-success'
+            }
+          });
+        }
+      });
     });
 
     // Reset event form inputs values

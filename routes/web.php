@@ -158,6 +158,7 @@ use App\Http\Controllers\tables\DatatableAdvanced;
 use App\Http\Controllers\tables\DatatableExtensions;
 use App\Http\Controllers\charts\ApexCharts;
 use App\Http\Controllers\charts\ChartJs;
+use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\laravel_example\DepartmentManagement;
 use App\Http\Controllers\laravel_example\HospitalManagement;
 use App\Http\Controllers\laravel_example\MedicalFileManagement;
@@ -172,9 +173,20 @@ Route::post('/auth/reset-password-basic', [ResetPasswordBasic::class, 'reset'])-
 Route::get('/auth/forgot-password-basic', [ForgotPasswordBasic::class, 'index'])->name('auth-forgot-password-basic');
 Route::post('/auth/forgot-password-basic', [ForgotPasswordBasic::class, 'reset'])->name('auth-forgot-password-basic.update');
 //authentifucated
-Route::middleware(['auth'])->group(function () {
-  // Main Page Route
-  Route::get('/', [Analytics::class, 'index'])->name('dashboard-analytics');
+Route::middleware(['auth', 'shareMenuData'])->group(function () {
+  Route::group(['middleware' => ['role:SuperAdmin|hospital|department|doctor']], function () {
+    // Main Page Route
+    Route::get('/', [Analytics::class, 'index'])->name('dashboard-analytics');
+    //CHART DATA
+    Route::get('/patientgender', [Analytics::class, 'patientgender'])->name('dashboard-patient-gender');
+    Route::get('/patient-disease-chart', [Analytics::class, 'patientdiseasechart'])->name('dashboard-patient-disease-chart');
+    Route::get('/patient-blood-chart', [Analytics::class, 'patientBloodChart'])->name('dashboard-patient-blood-chart');
+    Route::get('/getPatientCountsByDisease', [Analytics::class, 'getPatientCountsByDisease']);
+    Route::get('/reservationsByMonthAndLabel', [Analytics::class, 'getReservationsData']);
+  });
+
+
+  //
   Route::get('/dashboard/analytics', [Analytics::class, 'index'])->name('dashboard-analytic');
   Route::get('/dashboard/crm', [Crm::class, 'index'])->name('dashboard-crm');
   // locale
@@ -195,80 +207,91 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/layouts/blank', [Blank::class, 'index'])->name('layouts-blank');
 
   // Front Pages
-  Route::get('/front-pages/landing', [Landing::class, 'index'])->name('front-pages-landing');
-  Route::get('/front-pages/pricing', [Pricing::class, 'index'])->name('front-pages-pricing');
-  Route::get('/front-pages/payment', [Payment::class, 'index'])->name('front-pages-payment');
-  Route::get('/front-pages/checkout', [Checkout::class, 'index'])->name('front-pages-checkout');
-  Route::get('/front-pages/help-center', [HelpCenter::class, 'index'])->name('front-pages-help-center');
-  Route::get('/front-pages/help-center-article', [HelpCenterArticle::class, 'index'])->name('front-pages-help-center-article');
+  // Route::get('/front-pages/landing', [Landing::class, 'index'])->name('front-pages-landing');
+  // Route::get('/front-pages/pricing', [Pricing::class, 'index'])->name('front-pages-pricing');
+  // Route::get('/front-pages/payment', [Payment::class, 'index'])->name('front-pages-payment');
+  // Route::get('/front-pages/checkout', [Checkout::class, 'index'])->name('front-pages-checkout');
+  // Route::get('/front-pages/help-center', [HelpCenter::class, 'index'])->name('front-pages-help-center');
+  // Route::get('/front-pages/help-center-article', [HelpCenterArticle::class, 'index'])->name('front-pages-help-center-article');
 
   // apps
-  Route::get('/app/email', [Email::class, 'index'])->name('app-email');
+  // Route::get('/app/email', [Email::class, 'index'])->name('app-email');
   //chat
-  Route::get('/app/chat', [Chat::class, 'index'])->name('app-chat');
-  //calendar
-  Route::get('/app/calendar', [Calendar::class, 'index'])->name('app-calendar');
-  Route::get('/calendar/events', [Calendar::class, 'getEvents'])->name('app-calendar-events');
-  Route::post('/calendar/add-event', [Calendar::class, 'addEvent'])->name('app-calendar.add-event');
-  Route::post('/calendar/update-event/{id}', [Calendar::class, 'updateEvent'])->name('app-calendar.update-event');
-  Route::delete('/calendar/{id}', [Calendar::class, 'destroy'])->name('app-calendar.delete');
+  Route::group(['middleware' => ['role:SuperAdmin|hospital|department|doctor']], function () {
+
+    Route::get('/app/chat', [Chat::class, 'index'])->name('app-chat');
+    //calendar
+    Route::get('/app/calendar', [Calendar::class, 'index'])->name('app-calendar');
+    Route::get('/calendar/events', [Calendar::class, 'getEvents'])->name('app-calendar-events');
+  });
+  Route::group(['middleware' => ['role:SuperAdmin|doctor']], function () {
+    Route::post('/calendar/add-event', [Calendar::class, 'addEvent'])->name('app-calendar.add-event');
+    Route::post('/calendar/update-event/{id}', [Calendar::class, 'updateEvent'])->name('app-calendar.update-event');
+    Route::delete('/calendar/{id}', [Calendar::class, 'destroy'])->name('app-calendar.delete');
+  });
 
   //end calendar
-  Route::get('/app/kanban', [Kanban::class, 'index'])->name('app-kanban');
-  Route::get('/app/ecommerce/dashboard', [EcommerceDashboard::class, 'index'])->name('app-ecommerce-dashboard');
-  Route::get('/app/ecommerce/product/list', [EcommerceProductList::class, 'index'])->name('app-ecommerce-product-list');
-  Route::get('/app/ecommerce/product/add', [EcommerceProductAdd::class, 'index'])->name('app-ecommerce-product-add');
-  Route::get('/app/ecommerce/product/category', [EcommerceProductCategory::class, 'index'])->name('app-ecommerce-product-category');
-  Route::get('/app/ecommerce/order/list', [EcommerceOrderList::class, 'index'])->name('app-ecommerce-order-list');
-  Route::get('app/ecommerce/order/details', [EcommerceOrderDetails::class, 'index'])->name('app-ecommerce-order-details');
-  Route::get('/app/ecommerce/customer/all', [EcommerceCustomerAll::class, 'index'])->name('app-ecommerce-customer-all');
-  Route::get('app/ecommerce/customer/details/overview', [EcommerceCustomerDetailsOverview::class, 'index'])->name('app-ecommerce-customer-details-overview');
-  Route::get('app/ecommerce/customer/details/security', [EcommerceCustomerDetailsSecurity::class, 'index'])->name('app-ecommerce-customer-details-security');
-  Route::get('app/ecommerce/customer/details/billing', [EcommerceCustomerDetailsBilling::class, 'index'])->name('app-ecommerce-customer-details-billing');
-  Route::get('app/ecommerce/customer/details/notifications', [EcommerceCustomerDetailsNotifications::class, 'index'])->name('app-ecommerce-customer-details-notifications');
-  Route::get('/app/ecommerce/manage/reviews', [EcommerceManageReviews::class, 'index'])->name('app-ecommerce-manage-reviews');
-  Route::get('/app/ecommerce/referrals', [EcommerceReferrals::class, 'index'])->name('app-ecommerce-referrals');
-  Route::get('/app/ecommerce/settings/details', [EcommerceSettingsDetails::class, 'index'])->name('app-ecommerce-settings-details');
-  Route::get('/app/ecommerce/settings/payments', [EcommerceSettingsPayments::class, 'index'])->name('app-ecommerce-settings-payments');
-  Route::get('/app/ecommerce/settings/checkout', [EcommerceSettingsCheckout::class, 'index'])->name('app-ecommerce-settings-checkout');
-  Route::get('/app/ecommerce/settings/shipping', [EcommerceSettingsShipping::class, 'index'])->name('app-ecommerce-settings-shipping');
-  Route::get('/app/ecommerce/settings/locations', [EcommerceSettingsLocations::class, 'index'])->name('app-ecommerce-settings-locations');
-  Route::get('/app/ecommerce/settings/notifications', [EcommerceSettingsNotifications::class, 'index'])->name('app-ecommerce-settings-notifications');
-  Route::get('/app/academy/dashboard', [AcademyDashboard::class, 'index'])->name('app-academy-dashboard');
-  Route::get('/app/academy/course', [AcademyCourse::class, 'index'])->name('app-academy-course');
-  Route::get('/app/academy/course-details', [AcademyCourseDetails::class, 'index'])->name('app-academy-course-details');
-  Route::get('/app/logistics/dashboard', [LogisticsDashboard::class, 'index'])->name('app-logistics-dashboard');
-  Route::get('/app/logistics/fleet', [LogisticsFleet::class, 'index'])->name('app-logistics-fleet');
-  Route::get('/app/invoice/list', [InvoiceList::class, 'index'])->name('app-invoice-list');
-  Route::get('/app/invoice/preview', [InvoicePreview::class, 'index'])->name('app-invoice-preview');
-  Route::get('/app/invoice/print', [InvoicePrint::class, 'index'])->name('app-invoice-print');
-  Route::get('/app/invoice/edit', [InvoiceEdit::class, 'index'])->name('app-invoice-edit');
-  Route::get('/app/invoice/add', [InvoiceAdd::class, 'index'])->name('app-invoice-add');
-  Route::get('/app/user/list', [UserList::class, 'index'])->name('app-user-list');
-  Route::get('/app/user/view/account', [UserViewAccount::class, 'index'])->name('app-user-view-account');
-  Route::get('/app/user/view/security', [UserViewSecurity::class, 'index'])->name('app-user-view-security');
-  Route::get('/app/user/view/billing', [UserViewBilling::class, 'index'])->name('app-user-view-billing');
-  Route::get('/app/user/view/notifications', [UserViewNotifications::class, 'index'])->name('app-user-view-notifications');
-  Route::get('/app/user/view/connections', [UserViewConnections::class, 'index'])->name('app-user-view-connections');
-  Route::get('/app/access-roles', [AccessRoles::class, 'index'])->name('app-access-roles');
-  Route::get('/app/access-permission', [AccessPermission::class, 'index'])->name('app-access-permission');
+  // Route::get('/app/kanban', [Kanban::class, 'index'])->name('app-kanban');
+  // Route::get('/app/ecommerce/dashboard', [EcommerceDashboard::class, 'index'])->name('app-ecommerce-dashboard');
+  // Route::get('/app/ecommerce/product/list', [EcommerceProductList::class, 'index'])->name('app-ecommerce-product-list');
+  // Route::get('/app/ecommerce/product/add', [EcommerceProductAdd::class, 'index'])->name('app-ecommerce-product-add');
+  // Route::get('/app/ecommerce/product/category', [EcommerceProductCategory::class, 'index'])->name('app-ecommerce-product-category');
+  // Route::get('/app/ecommerce/order/list', [EcommerceOrderList::class, 'index'])->name('app-ecommerce-order-list');
+  // Route::get('app/ecommerce/order/details', [EcommerceOrderDetails::class, 'index'])->name('app-ecommerce-order-details');
+  // Route::get('/app/ecommerce/customer/all', [EcommerceCustomerAll::class, 'index'])->name('app-ecommerce-customer-all');
+  // Route::get('app/ecommerce/customer/details/overview', [EcommerceCustomerDetailsOverview::class, 'index'])->name('app-ecommerce-customer-details-overview');
+  // Route::get('app/ecommerce/customer/details/security', [EcommerceCustomerDetailsSecurity::class, 'index'])->name('app-ecommerce-customer-details-security');
+  // Route::get('app/ecommerce/customer/details/billing', [EcommerceCustomerDetailsBilling::class, 'index'])->name('app-ecommerce-customer-details-billing');
+  // Route::get('app/ecommerce/customer/details/notifications', [EcommerceCustomerDetailsNotifications::class, 'index'])->name('app-ecommerce-customer-details-notifications');
+  // Route::get('/app/ecommerce/manage/reviews', [EcommerceManageReviews::class, 'index'])->name('app-ecommerce-manage-reviews');
+  // Route::get('/app/ecommerce/referrals', [EcommerceReferrals::class, 'index'])->name('app-ecommerce-referrals');
+  // Route::get('/app/ecommerce/settings/details', [EcommerceSettingsDetails::class, 'index'])->name('app-ecommerce-settings-details');
+  // Route::get('/app/ecommerce/settings/payments', [EcommerceSettingsPayments::class, 'index'])->name('app-ecommerce-settings-payments');
+  // Route::get('/app/ecommerce/settings/checkout', [EcommerceSettingsCheckout::class, 'index'])->name('app-ecommerce-settings-checkout');
+  // Route::get('/app/ecommerce/settings/shipping', [EcommerceSettingsShipping::class, 'index'])->name('app-ecommerce-settings-shipping');
+  // Route::get('/app/ecommerce/settings/locations', [EcommerceSettingsLocations::class, 'index'])->name('app-ecommerce-settings-locations');
+  // Route::get('/app/ecommerce/settings/notifications', [EcommerceSettingsNotifications::class, 'index'])->name('app-ecommerce-settings-notifications');
+  // Route::get('/app/academy/dashboard', [AcademyDashboard::class, 'index'])->name('app-academy-dashboard');
+  // Route::get('/app/academy/course', [AcademyCourse::class, 'index'])->name('app-academy-course');
+  // Route::get('/app/academy/course-details', [AcademyCourseDetails::class, 'index'])->name('app-academy-course-details');
+  // Route::get('/app/logistics/dashboard', [LogisticsDashboard::class, 'index'])->name('app-logistics-dashboard');
+  // Route::get('/app/logistics/fleet', [LogisticsFleet::class, 'index'])->name('app-logistics-fleet');
+  // Route::get('/app/invoice/list', [InvoiceList::class, 'index'])->name('app-invoice-list');
+  // Route::get('/app/invoice/preview', [InvoicePreview::class, 'index'])->name('app-invoice-preview');
+  // Route::get('/app/invoice/print', [InvoicePrint::class, 'index'])->name('app-invoice-print');
+  // Route::get('/app/invoice/edit', [InvoiceEdit::class, 'index'])->name('app-invoice-edit');
+  // Route::get('/app/invoice/add', [InvoiceAdd::class, 'index'])->name('app-invoice-add');
+  // Route::get('/app/user/list', [UserList::class, 'index'])->name('app-user-list');
+  // Route::get('/app/user/view/account', [UserViewAccount::class, 'index'])->name('app-user-view-account');
+  // Route::get('/app/user/view/security', [UserViewSecurity::class, 'index'])->name('app-user-view-security');
+  // Route::get('/app/user/view/billing', [UserViewBilling::class, 'index'])->name('app-user-view-billing');
+  // Route::get('/app/user/view/notifications', [UserViewNotifications::class, 'index'])->name('app-user-view-notifications');
+  // Route::get('/app/user/view/connections', [UserViewConnections::class, 'index'])->name('app-user-view-connections');
+  // Route::get('/app/access-roles', [AccessRoles::class, 'index'])->name('app-access-roles');
+  // Route::get('/app/access-permission', [AccessPermission::class, 'index'])->name('app-access-permission');
 
   // pages
-  Route::get('/pages/profile-user', [UserProfile::class, 'index'])->name('pages-profile-user');
-  Route::get('/pages/profile-teams', [UserTeams::class, 'index'])->name('pages-profile-teams');
-  Route::get('/pages/profile-projects', [UserProjects::class, 'index'])->name('pages-profile-projects');
-  Route::get('/pages/profile-connections', [UserConnections::class, 'index'])->name('pages-profile-connections');
-  Route::get('/pages/account-settings-account', [AccountSettingsAccount::class, 'index'])->name('pages-account-settings-account');
-  Route::get('/pages/account-settings-security', [AccountSettingsSecurity::class, 'index'])->name('pages-account-settings-security');
-  Route::get('/pages/account-settings-billing', [AccountSettingsBilling::class, 'index'])->name('pages-account-settings-billing');
-  Route::get('/pages/account-settings-notifications', [AccountSettingsNotifications::class, 'index'])->name('pages-account-settings-notifications');
-  Route::get('/pages/account-settings-connections', [AccountSettingsConnections::class, 'index'])->name('pages-account-settings-connections');
-  Route::get('/pages/faq', [Faq::class, 'index'])->name('pages-faq');
-  Route::get('/pages/pricing', [PagesPricing::class, 'index'])->name('pages-pricing');
-  Route::get('/pages/misc-error', [MiscError::class, 'index'])->name('pages-misc-error');
-  Route::get('/pages/misc-under-maintenance', [MiscUnderMaintenance::class, 'index'])->name('pages-misc-under-maintenance');
-  Route::get('/pages/misc-comingsoon', [MiscComingSoon::class, 'index'])->name('pages-misc-comingsoon');
-  Route::get('/pages/misc-not-authorized', [MiscNotAuthorized::class, 'index'])->name('pages-misc-not-authorized');
+  Route::group(['middleware' => ['role:SuperAdmin|hospital|department|doctor']], function () {
+
+    Route::get('/pages/profile-user/{id}', [UserProfile::class, 'show'])->name('profile.show');
+    Route::post('/pages/profile-user/{id}', [UserProfile::class, 'update'])->name('profile.update');
+  });
+  //end edit profile
+  // Route::get('/pages/profile-user', [UserProfile::class, 'index'])->name('pages-profile-user');
+  // Route::get('/pages/profile-teams', [UserTeams::class, 'index'])->name('pages-profile-teams');
+  // Route::get('/pages/profile-projects', [UserProjects::class, 'index'])->name('pages-profile-projects');
+  // Route::get('/pages/profile-connections', [UserConnections::class, 'index'])->name('pages-profile-connections');
+  // Route::get('/pages/account-settings-account', [AccountSettingsAccount::class, 'index'])->name('pages-account-settings-account');
+  // Route::get('/pages/account-settings-security', [AccountSettingsSecurity::class, 'index'])->name('pages-account-settings-security');
+  // Route::get('/pages/account-settings-billing', [AccountSettingsBilling::class, 'index'])->name('pages-account-settings-billing');
+  // Route::get('/pages/account-settings-notifications', [AccountSettingsNotifications::class, 'index'])->name('pages-account-settings-notifications');
+  // Route::get('/pages/account-settings-connections', [AccountSettingsConnections::class, 'index'])->name('pages-account-settings-connections');
+  // Route::get('/pages/faq', [Faq::class, 'index'])->name('pages-faq');
+  // Route::get('/pages/pricing', [PagesPricing::class, 'index'])->name('pages-pricing');
+  // Route::get('/pages/misc-error', [MiscError::class, 'index'])->name('pages-misc-error');
+  // Route::get('/pages/misc-under-maintenance', [MiscUnderMaintenance::class, 'index'])->name('pages-misc-under-maintenance');
+  // Route::get('/pages/misc-comingsoon', [MiscComingSoon::class, 'index'])->name('pages-misc-comingsoon');
+  // Route::get('/pages/misc-not-authorized', [MiscNotAuthorized::class, 'index'])->name('pages-misc-not-authorized');
 
   // authentication
   Route::get('/auth/login-basic', [LoginBasic::class, 'index'])->name('auth-login-basic');
@@ -288,72 +311,73 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/auth/two-steps-cover', [TwoStepsCover::class, 'index'])->name('auth-two-steps-cover');
 
   // wizard example
-  Route::get('/wizard/ex-checkout', [WizardCheckout::class, 'index'])->name('wizard-ex-checkout');
-  Route::get('/wizard/ex-property-listing', [PropertyListing::class, 'index'])->name('wizard-ex-property-listing');
-  Route::get('/wizard/ex-create-deal', [CreateDeal::class, 'index'])->name('wizard-ex-create-deal');
+
+  // Route::get('/wizard/ex-checkout', [WizardCheckout::class, 'index'])->name('wizard-ex-checkout');
+  // Route::get('/wizard/ex-property-listing', [PropertyListing::class, 'index'])->name('wizard-ex-property-listing');
+  // Route::get('/wizard/ex-create-deal', [CreateDeal::class, 'index'])->name('wizard-ex-create-deal');
 
   // modal
-  Route::get('/modal-examples', [ModalExample::class, 'index'])->name('modal-examples');
+  // Route::get('/modal-examples', [ModalExample::class, 'index'])->name('modal-examples');
 
   // cards
-  Route::get('/cards/basic', [CardBasic::class, 'index'])->name('cards-basic');
-  Route::get('/cards/advance', [CardAdvance::class, 'index'])->name('cards-advance');
-  Route::get('/cards/statistics', [CardStatistics::class, 'index'])->name('cards-statistics');
-  Route::get('/cards/analytics', [CardAnalytics::class, 'index'])->name('cards-analytics');
+  // Route::get('/cards/basic', [CardBasic::class, 'index'])->name('cards-basic');
+  // Route::get('/cards/advance', [CardAdvance::class, 'index'])->name('cards-advance');
+  // Route::get('/cards/statistics', [CardStatistics::class, 'index'])->name('cards-statistics');
+  // Route::get('/cards/analytics', [CardAnalytics::class, 'index'])->name('cards-analytics');
   // Route::get('/cards/gamifications', [CardGamifications::class, 'index'])->name('cards-gamifications');
-  Route::get('/cards/actions', [CardActions::class, 'index'])->name('cards-actions');
+  // Route::get('/cards/actions', [CardActions::class, 'index'])->name('cards-actions');
 
   // User Interface
-  Route::get('/ui/accordion', [Accordion::class, 'index'])->name('ui-accordion');
-  Route::get('/ui/alerts', [Alerts::class, 'index'])->name('ui-alerts');
-  Route::get('/ui/badges', [Badges::class, 'index'])->name('ui-badges');
-  Route::get('/ui/buttons', [Buttons::class, 'index'])->name('ui-buttons');
-  Route::get('/ui/carousel', [Carousel::class, 'index'])->name('ui-carousel');
-  Route::get('/ui/collapse', [Collapse::class, 'index'])->name('ui-collapse');
-  Route::get('/ui/dropdowns', [Dropdowns::class, 'index'])->name('ui-dropdowns');
-  Route::get('/ui/footer', [Footer::class, 'index'])->name('ui-footer');
-  Route::get('/ui/list-groups', [ListGroups::class, 'index'])->name('ui-list-groups');
-  Route::get('/ui/modals', [Modals::class, 'index'])->name('ui-modals');
-  Route::get('/ui/navbar', [Navbar::class, 'index'])->name('ui-navbar');
-  Route::get('/ui/offcanvas', [Offcanvas::class, 'index'])->name('ui-offcanvas');
-  Route::get('/ui/pagination-breadcrumbs', [PaginationBreadcrumbs::class, 'index'])->name('ui-pagination-breadcrumbs');
-  Route::get('/ui/progress', [Progress::class, 'index'])->name('ui-progress');
-  Route::get('/ui/spinners', [Spinners::class, 'index'])->name('ui-spinners');
-  Route::get('/ui/tabs-pills', [TabsPills::class, 'index'])->name('ui-tabs-pills');
-  Route::get('/ui/toasts', [Toasts::class, 'index'])->name('ui-toasts');
-  Route::get('/ui/tooltips-popovers', [TooltipsPopovers::class, 'index'])->name('ui-tooltips-popovers');
-  Route::get('/ui/typography', [Typography::class, 'index'])->name('ui-typography');
+  // Route::get('/ui/accordion', [Accordion::class, 'index'])->name('ui-accordion');
+  // Route::get('/ui/alerts', [Alerts::class, 'index'])->name('ui-alerts');
+  // Route::get('/ui/badges', [Badges::class, 'index'])->name('ui-badges');
+  // Route::get('/ui/buttons', [Buttons::class, 'index'])->name('ui-buttons');
+  // Route::get('/ui/carousel', [Carousel::class, 'index'])->name('ui-carousel');
+  // Route::get('/ui/collapse', [Collapse::class, 'index'])->name('ui-collapse');
+  // Route::get('/ui/dropdowns', [Dropdowns::class, 'index'])->name('ui-dropdowns');
+  // Route::get('/ui/footer', [Footer::class, 'index'])->name('ui-footer');
+  // Route::get('/ui/list-groups', [ListGroups::class, 'index'])->name('ui-list-groups');
+  // Route::get('/ui/modals', [Modals::class, 'index'])->name('ui-modals');
+  // Route::get('/ui/navbar', [Navbar::class, 'index'])->name('ui-navbar');
+  // Route::get('/ui/offcanvas', [Offcanvas::class, 'index'])->name('ui-offcanvas');
+  // Route::get('/ui/pagination-breadcrumbs', [PaginationBreadcrumbs::class, 'index'])->name('ui-pagination-breadcrumbs');
+  // Route::get('/ui/progress', [Progress::class, 'index'])->name('ui-progress');
+  // Route::get('/ui/spinners', [Spinners::class, 'index'])->name('ui-spinners');
+  // Route::get('/ui/tabs-pills', [TabsPills::class, 'index'])->name('ui-tabs-pills');
+  // Route::get('/ui/toasts', [Toasts::class, 'index'])->name('ui-toasts');
+  // Route::get('/ui/tooltips-popovers', [TooltipsPopovers::class, 'index'])->name('ui-tooltips-popovers');
+  // Route::get('/ui/typography', [Typography::class, 'index'])->name('ui-typography');
 
   // extended ui
-  Route::get('/extended/ui-avatar', [Avatar::class, 'index'])->name('extended-ui-avatar');
-  Route::get('/extended/ui-blockui', [BlockUI::class, 'index'])->name('extended-ui-blockui');
-  Route::get('/extended/ui-drag-and-drop', [DragAndDrop::class, 'index'])->name('extended-ui-drag-and-drop');
-  Route::get('/extended/ui-media-player', [MediaPlayer::class, 'index'])->name('extended-ui-media-player');
-  Route::get('/extended/ui-perfect-scrollbar', [PerfectScrollbar::class, 'index'])->name('extended-ui-perfect-scrollbar');
-  Route::get('/extended/ui-star-ratings', [StarRatings::class, 'index'])->name('extended-ui-star-ratings');
-  Route::get('/extended/ui-sweetalert2', [SweetAlert::class, 'index'])->name('extended-ui-sweetalert2');
-  Route::get('/extended/ui-text-divider', [TextDivider::class, 'index'])->name('extended-ui-text-divider');
-  Route::get('/extended/ui-timeline-basic', [TimelineBasic::class, 'index'])->name('extended-ui-timeline-basic');
-  Route::get('/extended/ui-timeline-fullscreen', [TimelineFullscreen::class, 'index'])->name('extended-ui-timeline-fullscreen');
-  Route::get('/extended/ui-tour', [Tour::class, 'index'])->name('extended-ui-tour');
-  Route::get('/extended/ui-treeview', [Treeview::class, 'index'])->name('extended-ui-treeview');
-  Route::get('/extended/ui-misc', [Misc::class, 'index'])->name('extended-ui-misc');
+  // Route::get('/extended/ui-avatar', [Avatar::class, 'index'])->name('extended-ui-avatar');
+  // Route::get('/extended/ui-blockui', [BlockUI::class, 'index'])->name('extended-ui-blockui');
+  // Route::get('/extended/ui-drag-and-drop', [DragAndDrop::class, 'index'])->name('extended-ui-drag-and-drop');
+  // Route::get('/extended/ui-media-player', [MediaPlayer::class, 'index'])->name('extended-ui-media-player');
+  // Route::get('/extended/ui-perfect-scrollbar', [PerfectScrollbar::class, 'index'])->name('extended-ui-perfect-scrollbar');
+  // Route::get('/extended/ui-star-ratings', [StarRatings::class, 'index'])->name('extended-ui-star-ratings');
+  // Route::get('/extended/ui-sweetalert2', [SweetAlert::class, 'index'])->name('extended-ui-sweetalert2');
+  // Route::get('/extended/ui-text-divider', [TextDivider::class, 'index'])->name('extended-ui-text-divider');
+  // Route::get('/extended/ui-timeline-basic', [TimelineBasic::class, 'index'])->name('extended-ui-timeline-basic');
+  // Route::get('/extended/ui-timeline-fullscreen', [TimelineFullscreen::class, 'index'])->name('extended-ui-timeline-fullscreen');
+  // Route::get('/extended/ui-tour', [Tour::class, 'index'])->name('extended-ui-tour');
+  // Route::get('/extended/ui-treeview', [Treeview::class, 'index'])->name('extended-ui-treeview');
+  // Route::get('/extended/ui-misc', [Misc::class, 'index'])->name('extended-ui-misc');
 
   // icons
-  Route::get('/icons/tabler', [Tabler::class, 'index'])->name('icons-tabler');
-  Route::get('/icons/font-awesome', [FontAwesome::class, 'index'])->name('icons-font-awesome');
+  // Route::get('/icons/tabler', [Tabler::class, 'index'])->name('icons-tabler');
+  // Route::get('/icons/font-awesome', [FontAwesome::class, 'index'])->name('icons-font-awesome');
 
   // form elements
-  Route::get('/forms/basic-inputs', [BasicInput::class, 'index'])->name('forms-basic-inputs');
-  Route::get('/forms/input-groups', [InputGroups::class, 'index'])->name('forms-input-groups');
-  Route::get('/forms/custom-options', [CustomOptions::class, 'index'])->name('forms-custom-options');
-  Route::get('/forms/editors', [Editors::class, 'index'])->name('forms-editors');
-  Route::get('/forms/file-upload', [FileUpload::class, 'index'])->name('forms-file-upload');
-  Route::get('/forms/pickers', [Picker::class, 'index'])->name('forms-pickers');
-  Route::get('/forms/selects', [Selects::class, 'index'])->name('forms-selects');
-  Route::get('/forms/sliders', [Sliders::class, 'index'])->name('forms-sliders');
-  Route::get('/forms/switches', [Switches::class, 'index'])->name('forms-switches');
-  Route::get('/forms/extras', [Extras::class, 'index'])->name('forms-extras');
+  // Route::get('/forms/basic-inputs', [BasicInput::class, 'index'])->name('forms-basic-inputs');
+  // Route::get('/forms/input-groups', [InputGroups::class, 'index'])->name('forms-input-groups');
+  // Route::get('/forms/custom-options', [CustomOptions::class, 'index'])->name('forms-custom-options');
+  // Route::get('/forms/editors', [Editors::class, 'index'])->name('forms-editors');
+  // Route::get('/forms/file-upload', [FileUpload::class, 'index'])->name('forms-file-upload');
+  // Route::get('/forms/pickers', [Picker::class, 'index'])->name('forms-pickers');
+  // Route::get('/forms/selects', [Selects::class, 'index'])->name('forms-selects');
+  // Route::get('/forms/sliders', [Sliders::class, 'index'])->name('forms-sliders');
+  // Route::get('/forms/switches', [Switches::class, 'index'])->name('forms-switches');
+  // Route::get('/forms/extras', [Extras::class, 'index'])->name('forms-extras');
 
   // form layouts
   Route::get('/form/layouts-vertical', [VerticalForm::class, 'index'])->name('form-layouts-vertical');
@@ -361,41 +385,59 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/form/layouts-sticky', [StickyActions::class, 'index'])->name('form-layouts-sticky');
 
   // form wizards
-  Route::get('/form/wizard-numbered', [FormWizardNumbered::class, 'index'])->name('form-wizard-numbered');
-  Route::get('/form/wizard-icons', [FormWizardIcons::class, 'index'])->name('form-wizard-icons');
-  Route::get('/form/validation', [Validation::class, 'index'])->name('form-validation');
+  // Route::get('/form/wizard-numbered', [FormWizardNumbered::class, 'index'])->name('form-wizard-numbered');
+  // Route::get('/form/wizard-icons', [FormWizardIcons::class, 'index'])->name('form-wizard-icons');
+  // Route::get('/form/validation', [Validation::class, 'index'])->name('form-validation');
 
   // tables
-  Route::get('/tables/basic', [TablesBasic::class, 'index'])->name('tables-basic');
-  Route::get('/tables/datatables-basic', [DatatableBasic::class, 'index'])->name('tables-datatables-basic');
-  Route::get('/tables/datatables-advanced', [DatatableAdvanced::class, 'index'])->name('tables-datatables-advanced');
-  Route::get('/tables/datatables-extensions', [DatatableExtensions::class, 'index'])->name('tables-datatables-extensions');
+  // Route::get('/tables/basic', [TablesBasic::class, 'index'])->name('tables-basic');
+  // Route::get('/tables/datatables-basic', [DatatableBasic::class, 'index'])->name('tables-datatables-basic');
+  // Route::get('/tables/datatables-advanced', [DatatableAdvanced::class, 'index'])->name('tables-datatables-advanced');
+  // Route::get('/tables/datatables-extensions', [DatatableExtensions::class, 'index'])->name('tables-datatables-extensions');
 
   // charts
-  Route::get('/charts/apex', [ApexCharts::class, 'index'])->name('charts-apex');
-  Route::get('/charts/chartjs', [ChartJs::class, 'index'])->name('charts-chartjs');
+  // Route::get('/charts/apex', [ApexCharts::class, 'index'])->name('charts-apex');
+  // Route::get('/charts/chartjs', [ChartJs::class, 'index'])->name('charts-chartjs');
 
   // maps
-  Route::get('/maps/leaflet', [Leaflet::class, 'index'])->name('maps-leaflet');
+  // Route::get('/maps/leaflet', [Leaflet::class, 'index'])->name('maps-leaflet');
 
   // laravel example
-  Route::get('/laravel/user-management', [UserManagement::class, 'UserManagement'])->name('laravel-example-user-management');
-  Route::resource('/user-list', UserManagement::class);
+  Route::group(['middleware' => ['role:SuperAdmin|hospital|department']], function () {
+
+    Route::get('/laravel/user-management', [UserManagement::class, 'UserManagement'])->name('laravel-example-user-management');
+    Route::resource('/user-list', UserManagement::class);
+  });
   // patient management
-  Route::get('/laravel/patient-management', [PatientManagement::class, 'patientManagement'])->name('laravel-example-patient-management');
-  Route::resource('/patient-list', PatientManagement::class);
-  Route::resource('/MedicalFile-list', MedicalFileManagement::class);
-  Route::post('/MedicalFile/prescription', [MedicalFileManagement::class, 'prescription']);
+  Route::group(['middleware' => ['role:SuperAdmin|hospital|department|doctor']], function () {
 
-  Route::get('/download', function (Request $request) {
+    Route::get('/laravel/patient-management', [PatientManagement::class, 'patientManagement'])->name('laravel-example-patient-management');
+    Route::resource('/patient-list', PatientManagement::class);
+  });
+  Route::group(['middleware' => ['role:SuperAdmin|hospital|department|doctor']], function () {
 
-    $filePath = $request->input('url');
-    return response()->download(storage_path('app/' . $filePath));
+    Route::resource('/MedicalFile-list', MedicalFileManagement::class);
+    Route::post('/MedicalFile/prescription', [MedicalFileManagement::class, 'prescription']);
+
+    Route::get('/download', function (Request $request) {
+
+      $filePath = $request->input('url');
+      return response()->download(storage_path('app/' . $filePath));
+    });
   });
   // Hospital management
-  Route::get('/laravel/hospital-management', [HospitalManagement::class, 'hospitalManagement'])->name('laravel-example-hospital-management');
-  Route::resource('/hospital-list', HospitalManagement::class);
-  // department management
-  Route::get('/laravel/department-management', [DepartmentManagement::class, 'departmentManagement'])->name('laravel-example-department-management');
-  Route::resource('/department-list', DepartmentManagement::class);
+  Route::group(['middleware' => ['role:SuperAdmin']], function () {
+
+    Route::get('/laravel/hospital-management', [HospitalManagement::class, 'hospitalManagement'])->name('laravel-example-hospital-management');
+    Route::resource('/hospital-list', HospitalManagement::class);
+  });
+  Route::group(['middleware' => ['role:SuperAdmin|hospital']], function () {
+
+    // department management
+    Route::get('/laravel/department-management', [DepartmentManagement::class, 'departmentManagement'])->name('laravel-example-department-management');
+    Route::resource('/department-list', DepartmentManagement::class);
+  });
+  // Example resource route for holidays
+  Route::resource('/holidays', HolidayController::class);
+  Route::post('/changestatus', [HolidayController::class, 'changestatus']);
 });

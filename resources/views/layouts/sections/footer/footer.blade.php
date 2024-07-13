@@ -23,8 +23,8 @@
                     class="footer-link me-4" target="_blank">License</a>
                 <a href="{{ config('variables.moreThemes') ? config('variables.moreThemes') : '#' }}" target="_blank"
                     class="footer-link me-4">More Themes</a> --}}
-                <a href="{{ config('variables.documentation') ? config('variables.documentation') . '/laravel-introduction.html' : '#' }}"
-                    target="_blank" class="footer-link me-4">Documentation</a>
+                {{-- <a href="{{ config('variables.documentation') ? config('variables.documentation') . '/laravel-introduction.html' : '#' }}"
+                    target="_blank" class="footer-link me-4">Documentation</a> --}}
                 {{-- <a href="{{ config('variables.support') ? config('variables.support') : '#' }}" target="_blank"
                     class="footer-link d-none d-sm-inline-block">Support</a> --}}
             </div>
